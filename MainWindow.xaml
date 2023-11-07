@@ -4,9 +4,41 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:cpu_net"
+        xmlns:pages="clr-namespace:cpu_net.Views.Pages"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="CPU网络连接" Height="450" Width="800" TextBlock.TextAlignment="Center">
     <Grid>
-
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ListBox Grid.Column="0" Height="30" Name="PageMenu" SelectionChanged="ListBox_SelectionChanged" HorizontalAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <Grid HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <ListBoxItem Content="主页" Tag="{x:Type pages:HomePage}"/>
+                    </Grid>
+                    <Grid Grid.Column="1">
+                        <ListBoxItem Content="设置" Tag="{x:Type pages:ConfigurationPage}"/>
+                    </Grid>
+                </Grid>
+            </ListBox>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Frame x:Name="PageFrame" NavigationUIVisibility="Hidden" Margin="0,145,0,0"/>
+        </Grid>
     </Grid>
 </Window>
