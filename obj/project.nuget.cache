@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "7/h2BwmxJWhKRtlM+Xmf81Qevcwa33OHZacyQvmW0Md+7lQisE+00paOjsLw2KUIkxKi7/pTr6tEU/uNGEE4OA==",
+  "dgSpecHash": "WdHXpOvhTNUIv3XNGpfkAJpfzVEPzyY/2odmbRgLcDwmPmk/YXlET78l3M0vvfH64et41gKkCz5pIzM1jwzo8Q==",
   "success": true,
   "projectFilePath": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\a1392\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\nlog\\5.2.5\\nlog.5.2.5.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\nlog.wpf.richtextbox\\1.0.2\\nlog.wpf.richtextbox.1.0.2.nupkg.sha512"
+  ],
   "logs": []
 }

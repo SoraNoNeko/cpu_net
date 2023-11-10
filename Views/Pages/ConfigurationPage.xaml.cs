@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using cpu_net.ViewModel;
 
 namespace cpu_net.Views.Pages
 {
@@ -23,6 +24,7 @@ namespace cpu_net.Views.Pages
         public ConfigurationPage()
         {
             InitializeComponent();
+            DataContext = new MainViewModel();
         }
     }
 }

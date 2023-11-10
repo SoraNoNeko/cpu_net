@@ -13,4 +13,7 @@
     <SourceRoot Include="C:\Users\a1392\.nuget\packages\" />
     <SourceRoot Include="D:\Program Files\VS Shared\NuGetPackages\" />
   </ItemGroup>
+  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <PkgNLog_Wpf_RichTextBox Condition=" '$(PkgNLog_Wpf_RichTextBox)' == '' ">C:\Users\a1392\.nuget\packages\nlog.wpf.richtextbox\1.0.2</PkgNLog_Wpf_RichTextBox>
+  </PropertyGroup>
 </Project>

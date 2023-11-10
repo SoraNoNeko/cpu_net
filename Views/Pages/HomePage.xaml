@@ -3,14 +3,74 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:cpu_net.Views.Pages"
+      xmlns:local="clr-namespace:cpu_net.Views.Pages" xmlns:viewmodel="clr-namespace:cpu_net.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:MainViewModel}"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="HomePage">
 
     <Grid>
-        <StackPanel HorizontalAlignment="Stretch">
-            
-        </StackPanel>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="30*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Name="textNotice" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto"/>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Row="0" Grid.Column="0">
+                    <Button Content="宽带登录" Name="LoginButton" Click="LoginButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="120" Height="45"/>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0">
+                    <Button Content="运营商绑定" Name="skipButton" Click="SkipButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="120" Height="45"/>
+                </Grid>
+                <Grid Grid.Row="0" Grid.Column="1">
+                    <StackPanel Margin="10" VerticalAlignment="Center">
+                        <CheckBox Name="AutoRun" IsChecked="{Binding IsAutoRunCheck}">开机启动</CheckBox>
+                        <CheckBox Name="AutoLogin">自动登录</CheckBox>
+                        <CheckBox Name="AutoMin">自动最小化</CheckBox>
+                        <CheckBox Name="SetLogin">定时登录</CheckBox>
+                    </StackPanel>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="1">
+
+                </Grid>
+            </Grid>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="30*"/>
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Name="textLog" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" Text="{Binding Path=TxtLog,Mode=TwoWay}"/>
+        </Grid>
     </Grid>
 </Page>
