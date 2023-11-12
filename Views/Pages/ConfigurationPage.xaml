@@ -4,13 +4,86 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:cpu_net.Views.Pages"
+      xmlns:vm="clr-namespace:cpu_net.ViewModel"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="ConfigurationPage">
-
+    <Page.Resources>
+        <vm:CarrierViewModel x:Key="carrierVM"/>
+        <vm:UserViewModel x:Key="userVM"/>
+        <vm:MainViewModel x:Key="mVM"/>
+    </Page.Resources>
     <Grid>
-        <StackPanel HorizontalAlignment="Stretch">
-
-        </StackPanel>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Column="1" Grid.Row="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="125"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="35"/>
+                            <RowDefinition Height="90"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="320"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Row="0" Grid.Column="0" Text="账户信息设置" Background="White" BorderThickness="0" FontSize="24" IsReadOnly="True"/>
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="250"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                            </Grid.RowDefinitions>
+                            <TextBox Grid.Row="0" Grid.Column="0" Text="学  号:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="code" Width="250" FontSize="20" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=Code, Source={StaticResource userVM}}"/>
+                            <TextBox Grid.Row="1" Grid.Column="0" Text="密  码:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <PasswordBox Grid.Row="1" Grid.Column="1" Name="secret" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False" 
+                                         vm:LoginPasswordBoxHelper.IsPasswordBindingEnable="True"
+                                         vm:LoginPasswordBoxHelper.Password="{Binding Path=Password, Source={StaticResource userVM}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Row="2" Grid.Column="0" Text="运营商:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Name="carrier" Width="250" FontSize="20" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False"
+                                      ItemsSource="{Binding Path=ComboxList,Mode=TwoWay,Source={StaticResource carrierVM}}" SelectedItem="{Binding Path=ComboxItem,Mode=TwoWay,Source={StaticResource carrierVM}}" DisplayMemberPath="Text" SelectedValuePath="Key">
+                                <!--ComboBoxItem Name="cmcc">移动</ComboBoxItem-->
+                                <!--ComboBoxItem Name="unicom">联通</ComboBoxItem-->
+                                <!--ComboBoxItem Name="telecom">电信</ComboBoxItem-->
+                            </ComboBox>
+                        </Grid>
+                        <Grid Grid.Column="1" Grid.RowSpan="2">
+                            <StackPanel Margin="10" VerticalAlignment="Center">
+                                <CheckBox Name="AutoRun" IsChecked="{Binding Path=IsAutoRun,Source={StaticResource userVM}}">开机启动</CheckBox>
+                                <CheckBox Name="AutoLogin" IsChecked="{Binding Path=IsAutoLogin,Source={StaticResource userVM}}">自动登录</CheckBox>
+                                <CheckBox Name="AutoMin" IsChecked="{Binding Path=IsAutoMin,Source={StaticResource userVM}}">自动最小化</CheckBox>
+                                <CheckBox Name="SetLogin" IsChecked="{Binding Path=IsSetLogin,Source={StaticResource userVM}}">定时登录</CheckBox>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Column="1" Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <Button Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                </Grid>
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

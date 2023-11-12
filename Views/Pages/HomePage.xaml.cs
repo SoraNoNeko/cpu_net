@@ -16,9 +16,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using cpu_net.ViewModel;
 using System.Diagnostics;
-using NLog.Config;
-using NLog.Targets.Wrappers;
-using NLog;
+using System.Net.Sockets;
 
 namespace cpu_net.Views.Pages
 {
@@ -30,21 +28,25 @@ namespace cpu_net.Views.Pages
         readonly String noticeText = @"TestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTestTest
 TestTestTestTest
 TestTestTest";
+
+        public static HomePage instance;
+
+        public static HomePage Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new HomePage();
+                }
+                return instance;
+            }
+        }
+
         public HomePage()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
             textNotice.Text = noticeText;
-        }
-
-        public void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            Info("success1");
-        }
-
-        public void SkipButton_Click(object sender, RoutedEventArgs e)
-        {
-            Info("success2");
         }
         public void Info(string message)
         {

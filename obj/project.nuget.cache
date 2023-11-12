@@ -1,12 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "WdHXpOvhTNUIv3XNGpfkAJpfzVEPzyY/2odmbRgLcDwmPmk/YXlET78l3M0vvfH64et41gKkCz5pIzM1jwzo8Q==",
+  "dgSpecHash": "2FhCQAikVPRkAji1I8ICx7EHC1aZlr5udBYdSAIpRYuhBgoBKtCsrePr9I/45f8saKNqtHJBrPGXV94aJm/EAQ==",
   "success": true,
   "projectFilePath": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\a1392\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
-    "C:\\Users\\a1392\\.nuget\\packages\\nlog\\5.2.5\\nlog.5.2.5.nupkg.sha512",
-    "C:\\Users\\a1392\\.nuget\\packages\\nlog.wpf.richtextbox\\1.0.2\\nlog.wpf.richtextbox.1.0.2.nupkg.sha512"
+    "C:\\Users\\a1392\\.nuget\\packages\\prism.core\\8.1.97\\prism.core.8.1.97.nupkg.sha512"
   ],
   "logs": []
 }

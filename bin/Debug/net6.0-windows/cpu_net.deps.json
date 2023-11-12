@@ -9,8 +9,7 @@
       "cpu_net/1.0.0": {
         "dependencies": {
           "CommunityToolkit.Mvvm": "8.2.2",
-          "NLog": "5.2.5",
-          "NLog.Wpf.RichTextBox": "1.0.2"
+          "Prism.Core": "8.1.97"
         },
         "runtime": {
           "cpu_net.dll": {}
@@ -24,17 +23,12 @@
           }
         }
       },
-      "NLog/5.2.5": {
+      "Prism.Core/8.1.97": {
         "runtime": {
-          "lib/netstandard2.0/NLog.dll": {
-            "assemblyVersion": "5.0.0.0",
-            "fileVersion": "5.2.5.2160"
+          "lib/net5.0/Prism.dll": {
+            "assemblyVersion": "8.1.97.5141",
+            "fileVersion": "8.1.97.5141"
           }
-        }
-      },
-      "NLog.Wpf.RichTextBox/1.0.2": {
-        "dependencies": {
-          "NLog": "5.2.5"
         }
       }
     }
@@ -52,19 +46,12 @@
       "path": "communitytoolkit.mvvm/8.2.2",
       "hashPath": "communitytoolkit.mvvm.8.2.2.nupkg.sha512"
     },
-    "NLog/5.2.5": {
+    "Prism.Core/8.1.97": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-mMXtbAxfNzqkXcBjhJ3wN3rH7kwUZ0JL0GrUBI/lso7+tQ/HC4e5SnlmR3R5qQ9zWbqMbjxeH37rIf0yQGWTiA==",
-      "path": "nlog/5.2.5",
-      "hashPath": "nlog.5.2.5.nupkg.sha512"
-    },
-    "NLog.Wpf.RichTextBox/1.0.2": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-+M6w+doNjybuhZAMQ0Th2nSRrJztXtNNPnhoWR/DrZRY0BzIxkWUWJHtWUukhfnwY/ceVoPVtLRcnMbJztmoxw==",
-      "path": "nlog.wpf.richtextbox/1.0.2",
-      "hashPath": "nlog.wpf.richtextbox.1.0.2.nupkg.sha512"
+      "sha512": "sha512-EP5zrvWddw3eSq25Y7hHnDYdmLZEC2Z/gMrvmHzUuLbitmA1UaS7wQUlSwNr9Km8lzJNCvytFnaGBEFukHgoHg==",
+      "path": "prism.core/8.1.97",
+      "hashPath": "prism.core.8.1.97.nupkg.sha512"
     }
   }
 }

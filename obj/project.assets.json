@@ -18,23 +18,17 @@
           "buildTransitive/netstandard2.1/CommunityToolkit.Mvvm.targets": {}
         }
       },
-      "NLog/5.2.5": {
+      "Prism.Core/8.1.97": {
         "type": "package",
         "compile": {
-          "lib/netstandard2.0/NLog.dll": {
-            "related": ".xml"
+          "lib/net5.0/Prism.dll": {
+            "related": ".pdb;.xml"
           }
         },
         "runtime": {
-          "lib/netstandard2.0/NLog.dll": {
-            "related": ".xml"
+          "lib/net5.0/Prism.dll": {
+            "related": ".pdb;.xml"
           }
-        }
-      },
-      "NLog.Wpf.RichTextBox/1.0.2": {
-        "type": "package",
-        "dependencies": {
-          "NLog": "2.0.1.2"
         }
       }
     }
@@ -71,53 +65,37 @@
         "lib/netstandard2.1/CommunityToolkit.Mvvm.xml"
       ]
     },
-    "NLog/5.2.5": {
-      "sha512": "mMXtbAxfNzqkXcBjhJ3wN3rH7kwUZ0JL0GrUBI/lso7+tQ/HC4e5SnlmR3R5qQ9zWbqMbjxeH37rIf0yQGWTiA==",
+    "Prism.Core/8.1.97": {
+      "sha512": "EP5zrvWddw3eSq25Y7hHnDYdmLZEC2Z/gMrvmHzUuLbitmA1UaS7wQUlSwNr9Km8lzJNCvytFnaGBEFukHgoHg==",
       "type": "package",
-      "path": "nlog/5.2.5",
+      "path": "prism.core/8.1.97",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "N.png",
-        "lib/net35/NLog.dll",
-        "lib/net35/NLog.xml",
-        "lib/net45/NLog.dll",
-        "lib/net45/NLog.xml",
-        "lib/net46/NLog.dll",
-        "lib/net46/NLog.xml",
-        "lib/netstandard1.3/NLog.dll",
-        "lib/netstandard1.3/NLog.xml",
-        "lib/netstandard1.5/NLog.dll",
-        "lib/netstandard1.5/NLog.xml",
-        "lib/netstandard2.0/NLog.dll",
-        "lib/netstandard2.0/NLog.xml",
-        "nlog.5.2.5.nupkg.sha512",
-        "nlog.nuspec"
-      ]
-    },
-    "NLog.Wpf.RichTextBox/1.0.2": {
-      "sha512": "+M6w+doNjybuhZAMQ0Th2nSRrJztXtNNPnhoWR/DrZRY0BzIxkWUWJHtWUukhfnwY/ceVoPVtLRcnMbJztmoxw==",
-      "type": "package",
-      "path": "nlog.wpf.richtextbox/1.0.2",
-      "hasTools": true,
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "content/Helper/README_NLog_WpfRichTextBox.txt",
-        "content/Helper/WpfRichTextBoxRowColoringRule.cs.pp",
-        "content/Helper/WpfRichTextBoxTarget.cs.pp",
-        "content/Helper/WpfRichTextBoxWordColoringRule.cs.pp",
-        "nlog.wpf.richtextbox.1.0.2.nupkg.sha512",
-        "nlog.wpf.richtextbox.nuspec",
-        "tools/install.ps1"
+        "LICENSE",
+        "lib/net461/Prism.dll",
+        "lib/net461/Prism.pdb",
+        "lib/net461/Prism.xml",
+        "lib/net47/Prism.dll",
+        "lib/net47/Prism.pdb",
+        "lib/net47/Prism.xml",
+        "lib/net5.0/Prism.dll",
+        "lib/net5.0/Prism.pdb",
+        "lib/net5.0/Prism.xml",
+        "lib/netstandard2.0/Prism.dll",
+        "lib/netstandard2.0/Prism.pdb",
+        "lib/netstandard2.0/Prism.xml",
+        "prism-logo.png",
+        "prism.core.8.1.97.nupkg.sha512",
+        "prism.core.nuspec",
+        "readme.txt"
       ]
     }
   },
   "projectFileDependencyGroups": {
     "net6.0-windows7.0": [
       "CommunityToolkit.Mvvm >= 8.2.2",
-      "NLog >= 5.2.5",
-      "NLog.Wpf.RichTextBox >= 1.0.2"
+      "Prism.Core >= 8.1.97"
     ]
   },
   "packageFolders": {
@@ -168,13 +146,9 @@
             "target": "Package",
             "version": "[8.2.2, )"
           },
-          "NLog": {
+          "Prism.Core": {
             "target": "Package",
-            "version": "[5.2.5, )"
-          },
-          "NLog.Wpf.RichTextBox": {
-            "target": "Package",
-            "version": "[1.0.2, )"
+            "version": "[8.1.97, )"
           }
         },
         "imports": [
