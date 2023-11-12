@@ -19,6 +19,15 @@ using System.Threading;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using System.Security.Cryptography.Pkcs;
 using System.Runtime.CompilerServices;
+using System.Net.Http;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Windows.Documents;
+using System.Net;
+using System.Security.Policy;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace cpu_net.ViewModel
 {
@@ -43,9 +52,20 @@ namespace cpu_net.ViewModel
 
         public void Info(string message)
         {
-             TxtLog = TxtLog + message + Environment.NewLine;
+             TxtLog = TxtLog + $"{DateTime.Now.ToString("HH:mm:dd")}  " + message + Environment.NewLine;
         }
+        private RelayCommand noticeButton_Click;
+        public RelayCommand NoticeButton_Click
+        {
+            get
+            {
+                if (noticeButton_Click == null)
+                    noticeButton_Click = new RelayCommand(() => NoticeOnline());
+                return noticeButton_Click;
 
+            }
+            set { loginButton_Click = value; }
+        }
         private RelayCommand loginButton_Click;
         public RelayCommand LoginButton_Click
         {
@@ -71,15 +91,74 @@ namespace cpu_net.ViewModel
             }
             set { bindButton_Click = value; }
         }
-
-        private void LoginOnline()
+        private record class LRes([property: JsonPropertyName("result")] string Result,
+                                  [property: JsonPropertyName("msga")] string Msga);
+        public void LoginOnline()
         {
-            Info("Test Login");
+            SettingModel settingData=new SettingModel();
+            if (settingData.PathExist())
+            {
+                settingData = settingData.Read();
+                string Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
+                    $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
+                try
+                {               
+                    var res = HttpRequestHelper.HttpGetRequest(Login_url);
+                    if(res == null)
+                    {
+                        Info("网络错误");
+                        return;
+                    }
+                    var obj = JsonSerializer.Deserialize<List<LRes>>(res.Split(new string[] { "\r\n" }, StringSplitOptions.None)[0]);
+                    if (obj != null) 
+                    {
+                        switch (obj[0].Result)
+                        {
+                            case "1":
+                                Info("登录成功");
+                                break;
+                            case "0":
+                                Info("登录失败");
+                                switch(obj[0].Msga)
+                                {
+                                    default:
+                                        Info($"Error Message: {obj[0].Msga}");
+                                        break;
+                                    case "ldap auth error":
+                                        Info("密码错误");
+                                        break;
+                                    case "unbind isp uid":
+                                        Info("未绑定宽带账号");
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                }
+                catch (HttpRequestException e)
+                {
+                    Info("登录失败");
+                    Info(e.Message);
+                }
+                catch(JsonException e)
+                {
+                    Info("网络连接失败");
+                }
+            }
+            else
+            {
+                Info("No Config Found");
+                MessageBox.Show("请在设置中添加账号信息", "提示");
+            }
+            
         }
-
+        private void NoticeOnline()
+        {
+            System.Diagnostics.Process.Start("explorer.exe", "https://lic.cpu.edu.cn/ee/c6/c7550a192198/page.htm");
+        }
         private void BindOnline()
         {
-            Info("Test Bind");
+            System.Diagnostics.Process.Start("explorer.exe", "http://192.168.199.70:8080/Self/Dashboard");
         }
     }
 
@@ -102,17 +181,13 @@ namespace cpu_net.ViewModel
     public class UserViewModel : ViewModelBase
     {
         SettingModel settingData = new SettingModel();
-
+        AutoStart autoStart = new AutoStart();
         public UserViewModel()
         {
             WeakReferenceMessenger.Default.Register<string>(this, Receive);
-            IsAutoRun = false;
-            IsAutoLogin = true;
-            IsAutoMin = true;
-            IsSetLogin = false;
             if (settingData.PathExist())
             {
-                settingData.Read();
+                settingData = settingData.Read();
                 Code = settingData.Username;
                 Password = settingData.Password;
                 IsAutoRun = settingData.IsAutoRun;
@@ -138,7 +213,9 @@ namespace cpu_net.ViewModel
         public Boolean IsAutoRun
         {
             get { return isAutoRun; }
-            set { isAutoRun = value; settingData.IsAutoRun = isAutoRun; OnPropertyChanged(); }
+            set { isAutoRun = value; settingData.IsAutoRun = isAutoRun;
+                autoStart.SetAutoStart(isAutoRun);
+                OnPropertyChanged(); }
         }
 
         private Boolean isAutoLogin;
@@ -180,13 +257,11 @@ namespace cpu_net.ViewModel
         
         private void SaveAccount()
         {
-            settingData.Username = Code;
-            settingData.Password = Password;
-            int Key=0;
-            string carrier="";
-            switch(Text)
+            int Key = 0;
+            string carrier = "";
+            switch (Text)
             {
-                case "请选择运营商": 
+                case "请选择运营商":
                     Key = 0;
                     carrier = "";
                     break;
@@ -203,9 +278,22 @@ namespace cpu_net.ViewModel
                     carrier = "telecom";
                     break;
             }
-            settingData.Carrier = carrier;
-            settingData.Key = Key;
-            settingData.Save();
+            if (String.IsNullOrEmpty(Code) | String.IsNullOrEmpty(Password))
+            {
+                MessageBox.Show("请输入学号和密码","Attention");
+            }else if (Key == 0)
+            {
+                MessageBox.Show("请选择运营商", "Attention");
+            }
+            else
+            {
+                settingData.Username = Code;
+                settingData.Password = Password;
+                settingData.Carrier = carrier;
+                settingData.Key = Key;
+                settingData.Save();
+                MessageBox.Show("保存成功", "Info");
+            }
         }
     }
 
@@ -222,7 +310,7 @@ namespace cpu_net.ViewModel
         };
             if (settingData.PathExist())
             {
-                settingData.Read();
+                settingData = settingData.Read();
                 ComboxItem = ComboxList[settingData.Key];
             }
             else
@@ -306,5 +394,133 @@ namespace cpu_net.ViewModel
             }
         }
 
+    }
+
+    public static class HttpRequestHelper
+    {
+        /// <summary>
+        /// Http Get Request
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public static string HttpGetRequest(string url)
+        {
+            try
+            {
+                string strGetResponse = string.Empty;
+                var getRequest = CreateHttpRequest(url, "GET");
+                var getResponse = getRequest.GetResponse() as HttpWebResponse;
+                strGetResponse = GetHttpResponse(getResponse, "GET");
+                return strGetResponse;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Http Post Request
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="postJsonData"></param>
+        /// <returns></returns>
+        public static string HttpPostRequest(string url, string postJsonData)
+        {
+            string strPostReponse = string.Empty;
+            try
+            {
+                var postRequest = CreateHttpRequest(url, "POST", postJsonData);
+                var postResponse = postRequest.GetResponse() as HttpWebResponse;
+                strPostReponse = GetHttpResponse(postResponse, "POST");
+            }
+            catch (Exception ex)
+            {
+                strPostReponse = ex.Message;
+            }
+            return strPostReponse;
+        }
+
+
+        private static HttpWebRequest CreateHttpRequest(string url, string requestType, params object[] strJson)
+        {
+            HttpWebRequest request = null;
+            const string get = "GET";
+            const string post = "POST";
+            if (string.Equals(requestType, get, StringComparison.OrdinalIgnoreCase))
+            {
+                request = CreateGetHttpWebRequest(url);
+            }
+            if (string.Equals(requestType, post, StringComparison.OrdinalIgnoreCase))
+            {
+                request = CreatePostHttpWebRequest(url, strJson[0].ToString());
+            }
+            return request;
+        }
+
+        private static HttpWebRequest CreateGetHttpWebRequest(string url)
+        {
+            var getRequest = HttpWebRequest.Create(url) as HttpWebRequest;
+            getRequest.Method = "GET";
+            getRequest.Timeout = 5000;
+            getRequest.ContentType = "text/html;charset=UTF-8";
+            getRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            return getRequest;
+        }
+
+        private static HttpWebRequest CreatePostHttpWebRequest(string url, string postData)
+        {
+            var postRequest = HttpWebRequest.Create(url) as HttpWebRequest;
+            postRequest.KeepAlive = false;
+            postRequest.Timeout = 5000;
+            postRequest.Method = "POST";
+            postRequest.ContentType = "application/x-www-form-urlencoded";
+            postRequest.ContentLength = postData.Length;
+            postRequest.AllowWriteStreamBuffering = false;
+            StreamWriter writer = new StreamWriter(postRequest.GetRequestStream(), Encoding.ASCII);
+            writer.Write(postData);
+            writer.Flush();
+            return postRequest;
+        }
+
+        private static string GetHttpResponse(HttpWebResponse response, string requestType)
+        {
+            var responseResult = "";
+            const string post = "POST";
+            string encoding = "UTF-8";
+            if (string.Equals(requestType, post, StringComparison.OrdinalIgnoreCase))
+            {
+                encoding = response.ContentEncoding;
+                if (encoding == null || encoding.Length < 1)
+                {
+                    encoding = "UTF-8";
+                }
+            }
+            using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(encoding)))
+            {
+                responseResult = reader.ReadToEnd();
+            }
+            return responseResult;
+        }
+
+        private static string GetHttpResponseAsync(HttpWebResponse response, string requestType)
+        {
+            var responseResult = "";
+            const string post = "POST";
+            string encoding = "UTF-8";
+            if (string.Equals(requestType, post, StringComparison.OrdinalIgnoreCase))
+            {
+                encoding = response.ContentEncoding;
+                if (encoding == null || encoding.Length < 1)
+                {
+                    encoding = "UTF-8";
+                }
+            }
+            using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(encoding)))
+            {
+                responseResult = reader.ReadToEnd();
+            }
+            return responseResult;
+        }
     }
 }

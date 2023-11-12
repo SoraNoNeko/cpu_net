@@ -63,6 +63,11 @@ namespace cpu_net.Views.Pages
             secret.Password = String.Empty;
             carrier.SelectedIndex = 0;
         }
-        public int getKey() { return carrier.SelectedIndex; }
+
+        private void Hyperlink_Click(object sender, RoutedEventArgs e)
+        {
+            Hyperlink link = sender as Hyperlink;
+            System.Diagnostics.Process.Start("explorer.exe", link.NavigateUri.AbsoluteUri);
+        }
     }
 }

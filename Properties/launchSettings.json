@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "cpu_net": {
+      "commandName": "Project",
+      "workingDirectory": "D:\\py\\cpu_net\\workingspace"
+    }
+  }
+}

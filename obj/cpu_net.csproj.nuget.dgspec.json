@@ -48,6 +48,10 @@
               "target": "Package",
               "version": "[8.2.2, )"
             },
+            "Hardcodet.NotifyIcon.Wpf": {
+              "target": "Package",
+              "version": "[1.1.0, )"
+            },
             "Prism.Core": {
               "target": "Package",
               "version": "[8.1.97, )"
@@ -68,7 +72,7 @@
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             },
-            "Microsoft.WindowsDesktop.App.WPF": {
+            "Microsoft.WindowsDesktop.App": {
               "privateAssets": "none"
             }
           },

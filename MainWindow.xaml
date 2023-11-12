@@ -5,8 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:cpu_net"
         xmlns:pages="clr-namespace:cpu_net.Views.Pages"
+        xmlns:vm="clr-namespace:cpu_net.ViewModel"
+        Icon="shinnku.ico"
         mc:Ignorable="d"
-        Title="CPU网络连接" Height="450" Width="800" TextBlock.TextAlignment="Center">
+        Closing="Window_Closing"
+        StateChanged="Window_StateChanged"
+        Title="CPU网络连接" Height="450" Width="600" TextBlock.TextAlignment="Center"
+        MinHeight="450" MinWidth="600">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>

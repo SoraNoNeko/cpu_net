@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Prism.Mvvm;
+using System.Diagnostics;
 
 namespace cpu_net.Model
 {
@@ -17,7 +18,7 @@ namespace cpu_net.Model
         }
 
         //配置文件路径
-        private readonly string _SettingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UserSetting.json");
+        private readonly string _SettingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config.json");
         private string _Password;
         private string _UserName;
         private string _Carrier;
@@ -140,7 +141,7 @@ namespace cpu_net.Model
             userSettingData.Key = Key;
             userSettingData.Password = Password;
             userSettingData.IsAutoRun = IsAutoRun;
-            userSettingData.IsSetLogin = IsAutoLogin;
+            userSettingData.IsAutoLogin = IsAutoLogin;
             userSettingData.IsAutoMin = IsAutoMin;
             userSettingData.IsSetLogin = IsSetLogin;
             string jsonStr = JsonSerializer.Serialize<SettingModel>(userSettingData, new JsonSerializerOptions { WriteIndented = true });

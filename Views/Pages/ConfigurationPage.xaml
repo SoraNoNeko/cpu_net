@@ -66,7 +66,12 @@
                             </ComboBox>
                         </Grid>
                         <Grid Grid.Column="1" Grid.RowSpan="2">
-                            <StackPanel Margin="10" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Center">
                                 <CheckBox Name="AutoRun" IsChecked="{Binding Path=IsAutoRun,Source={StaticResource userVM}}">开机启动</CheckBox>
                                 <CheckBox Name="AutoLogin" IsChecked="{Binding Path=IsAutoLogin,Source={StaticResource userVM}}">自动登录</CheckBox>
                                 <CheckBox Name="AutoMin" IsChecked="{Binding Path=IsAutoMin,Source={StaticResource userVM}}">自动最小化</CheckBox>
@@ -80,8 +85,20 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="40"/>
+                    </Grid.RowDefinitions>
                     <Button Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
                     <Button Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
+                               Block.TextAlignment="Center" VerticalAlignment="Center">
+                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >
+                            Developed BY 二阶堂真红
+                        </TextBox><LineBreak/>
+                            <Hyperlink NavigateUri="https://github.com/SoraNoNeko/cpu_net" 
+                            Click="Hyperlink_Click" FontSize="16">代码发布页</Hyperlink>
+                    </TextBlock>
                 </Grid>
             </Grid>
         </Grid>
