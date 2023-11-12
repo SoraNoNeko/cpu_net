@@ -1,26 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using cpu_net.Model;
+using cpu_net.ViewModel;
+using cpu_net.Views.Pages;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using cpu_net.Views.Pages;
-using cpu_net.ViewModel;
-using System.Diagnostics;
-using Prism.Ioc;
-using System.ComponentModel;
-using cpu_net.Model;
-using CommunityToolkit.Mvvm.Input;
 using System.Windows.Forms;
-using System.Threading;
+using System.Windows.Media;
 using Timer = System.Threading.Timer;
 
 namespace cpu_net
@@ -30,7 +15,6 @@ namespace cpu_net
     /// </summary>
     public partial class MainWindow : Window
     {
-        private NotifyIcon notifyIcon = null;
         SettingModel settingData = new SettingModel();
         ConfigurationPage ConfigurationPage = new ConfigurationPage();
 
