@@ -27,6 +27,7 @@ namespace cpu_net.Views.Pages
     {
         readonly String noticeText = @"欢迎使用本程序，
 本程序旨在帮助药大学生自动登录校园网，免受断网困扰
+23级本本答疑群：819668931
 使用本程序前，需要绑定运营商账号，
 绑定方法点击下方按钮可以显示
 本程序所有数据均存放在本地，
@@ -35,7 +36,7 @@ namespace cpu_net.Views.Pages
 如果需要自动登录功能，请勾选自动登录
 其功能为每6小时刷新登录状态
 需要电脑不关机并连宿舍网
-连接CPU情况下请关闭本软件，暂时未添加网络识别功能";
+尝试使用CPU模式强制连接CPU时可能会卡住，是正常现象";
 
         public static HomePage instance;
 
