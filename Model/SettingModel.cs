@@ -17,6 +17,7 @@ namespace cpu_net.Model
         private string _UserName;
         private string _Carrier;
         private int _Key;
+        private int _Mode = 0;
         private bool _IsAutoRun;
         private bool _IsAutoLogin;
         private bool _IsAutoMin;
@@ -83,6 +84,15 @@ namespace cpu_net.Model
                 SetProperty(ref _Key, value);
             }
         }
+
+        public int Mode
+        {
+            get { return _Mode; }
+            set
+            {
+                SetProperty(ref _Mode, value);
+            }
+        }
         /// <summary>
         /// 是否自动登录
         /// </summary>
@@ -133,6 +143,7 @@ namespace cpu_net.Model
             userSettingData.Username = Username;
             userSettingData.Carrier = Carrier;
             userSettingData.Key = Key;
+            userSettingData.Mode = Mode;
             userSettingData.Password = Password;
             userSettingData.IsAutoRun = IsAutoRun;
             userSettingData.IsAutoLogin = IsAutoLogin;

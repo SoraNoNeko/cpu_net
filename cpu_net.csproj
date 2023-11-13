@@ -14,11 +14,17 @@
     <BaseOutputPath>D:\py\cpu_net\workingspace\bin</BaseOutputPath>
     <BaseIntermediateOutputPath>D:\py\cpu_net\workingspace\obj</BaseIntermediateOutputPath>
     <IsPublishable>True</IsPublishable>
-    <FileVersion>1.1.0</FileVersion>
+    <FileVersion>1.2.0</FileVersion>
+    <IncludeSymbols>False</IncludeSymbols>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

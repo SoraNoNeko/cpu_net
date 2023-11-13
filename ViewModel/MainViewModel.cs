@@ -9,24 +9,21 @@ using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
+using static System.Net.WebRequestMethods;
 
 namespace cpu_net.ViewModel
 {
     public class MainViewModel: ViewModelBase
     {
-        public CarrierViewModel m1 { get; set; }
-        public UserViewModel m2 { get; set; }
 
         public MainViewModel() 
         { 
-            m1 = new CarrierViewModel();
-            m2 = new UserViewModel();
-
         }
         private string? txtLog;
 
@@ -77,6 +74,19 @@ namespace cpu_net.ViewModel
             }
             set { bindButton_Click = value; }
         }
+        
+        public string GetIP()
+        {
+            string localIP = string.Empty;
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                localIP = endPoint.Address.ToString();
+            }
+            Info($"当前IP为{localIP}");
+            return localIP;
+        }
 
         public class _LRes
         {
@@ -92,13 +102,69 @@ namespace cpu_net.ViewModel
             SettingModel settingData=new SettingModel();
             if (settingData.PathExist())
             {
+                var _IP = GetIP();
                 settingData = settingData.Read();
-                string Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
+                int _mode = 0;
+                switch (settingData.Mode)
+                {
+                    case 0:
+                        _mode = settingData.Mode;
+                        break;
+                    case 1:
+                        _mode = settingData.Mode;
+                        break;
+                    case 2:
+                        string[] _ip = _IP.Split('.');
+                        if (_ip[0] == "10" & _ip[1] == "7")
+                        {
+                            _mode = 1;
+                            Info("自动识别为CPU环境");
+                        }
+                        else if(_ip[0] == "10" & _ip[1] == "4")
+                        {
+                            _mode = 1;
+                            Info("自动识别为CPU环境");
+                        }
+                        else
+                        {
+                            _mode = 0;
+                            Info("自动识别为宽带环境");
+                        }
+                        break;
+                }
+                string Login_url;
+                switch (_mode) {
+                    case 0:
+                        Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
                     $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
+                        break;
+                    case 1:
+                        var local_ip = _IP;
+                        Login_url = $"http://192.168.199.21:801/eportal/?c=Portal&a=login&callback=dr1004&login_method=1&user_account=%2C1%2C{settingData.Username}&user_password={settingData.Password}" +
+                            $"&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=3.3.3&v=1954";
+                        break;
+                    default:
+                        Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
+                   $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
+                        break;
+                }
                 try
-                {               
+                {
                     //var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace(" ","");
-                    var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
+                    string _res;
+                    switch (_mode)
+                    {
+                        case 0:
+                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
+                            break;
+                        case 1:
+                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1004", "").Replace(" ", "");
+                            break;
+                        default:
+                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
+                            break;
+                    }
+
                     //System.Diagnostics.Debug.WriteLine(_res);
                     var res = _res.Substring(1,_res.Length-2);
                     System.Diagnostics.Debug.WriteLine(res);
@@ -141,7 +207,7 @@ namespace cpu_net.ViewModel
                 }
                 catch(JsonException e)
                 {
-                    Info("网络连接失败");
+                    Info("JSON解析失败");
                 }
             }
             else
@@ -193,14 +259,17 @@ namespace cpu_net.ViewModel
                 IsAutoLogin = settingData.IsAutoLogin;
                 IsAutoMin = settingData.IsAutoMin;
                 IsSetLogin = settingData.IsSetLogin;
+                Mode = settingData.Mode;
             }
         }
+
         private string code;
         public string Code
         {
             get { return code; }
             set { code = value; OnPropertyChanged(); }
         }
+
         private string password;
         public string Password
         {
@@ -223,12 +292,14 @@ namespace cpu_net.ViewModel
             get { return isAutoLogin; }
             set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; OnPropertyChanged(); }
         }
+
         private Boolean isAutoMin;
         public Boolean IsAutoMin
         {
             get { return isAutoMin; }
             set { isAutoMin = value; settingData.IsAutoMin = isAutoMin; OnPropertyChanged(); }
         }
+
         private Boolean isSetLogin;
         public Boolean IsSetLogin
         {
@@ -236,6 +307,88 @@ namespace cpu_net.ViewModel
             set { isSetLogin = value; settingData.IsSetLogin = isSetLogin; OnPropertyChanged(); }
         }
 
+        private int mode;
+        public int Mode
+        {
+            get { return mode; }
+            set { mode = value; settingData.Mode = mode; OnPropertyChanged(); }
+        }
+        
+        private RelayCommand pppButton_Click;
+        public RelayCommand PppButton_Click
+        {
+            get
+            {
+                if (pppButton_Click == null)
+                    pppButton_Click = new RelayCommand(() => PppMode());
+                return pppButton_Click;
+
+            }
+            set { pppButton_Click = value; }
+        }
+
+        private RelayCommand cpuButton_Click;
+        public RelayCommand CpuButton_Click
+        {
+            get
+            {
+                if (cpuButton_Click == null)
+                    cpuButton_Click = new RelayCommand(() => CpuMode());
+                return cpuButton_Click;
+
+            }
+            set { cpuButton_Click = value; }
+        }
+
+        private RelayCommand autoButton_Click;
+        public RelayCommand AutoButton_Click
+        {
+            get
+            {
+                if (autoButton_Click == null)
+                    autoButton_Click = new RelayCommand(() => AutoMode());
+                return autoButton_Click;
+
+            }
+            set { autoButton_Click = value; }
+        }
+
+        private void PppMode()
+        {
+            Mode = 0;
+        }
+
+        private void CpuMode()
+        {
+            Mode = 1;
+        }
+
+        private void AutoMode()
+        {
+            Mode = 2;
+        }
+        /*
+        private Boolean pppChecked;
+        public Boolean PppChecked
+        {
+            get { return Mode == 0?true:false; }
+            set { pppChecked = value; cpuChecked = false; autoChecked = false; Mode = 0; settingData.Mode = Mode; OnPropertyChanged(); }
+        }
+
+        private Boolean cpuChecked;
+        public Boolean CpuChecked
+        {
+            get { return Mode == 1 ? true : false; }
+            set { cpuChecked = value; autoChecked = false; pppChecked = false; Mode = 1; settingData.Mode = Mode; OnPropertyChanged(); }
+        }
+
+        private Boolean autoChecked;
+        public Boolean AutoChecked
+        {
+            get { return Mode == 2 ? true : false; }
+            set { autoChecked = value; pppChecked = false; cpuChecked = false; Mode = 2; settingData.Mode = Mode; OnPropertyChanged(); }
+        }
+        */
         private RelayCommand saveButton_Click;
         public RelayCommand SaveButton_Click
         {

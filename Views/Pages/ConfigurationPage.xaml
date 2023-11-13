@@ -86,12 +86,19 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="40"/>
                     </Grid.RowDefinitions>
-                    <Button Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
-                    <Button Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
-                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
+                    <StackPanel Margin="20,0,0,0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Label HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15">登录模式:</Label>
+                        <RadioButton Name="ppp" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=PppButton_Click,Source={StaticResource userVM}}">宽带</RadioButton>
+                        <RadioButton Name="cpu" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=CpuButton_Click,Source={StaticResource userVM}}">CPU</RadioButton>
+                        <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
+                    </StackPanel>
+                    <Button Grid.Row="1" Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <Button Grid.Row="1" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
                                Block.TextAlignment="Center" VerticalAlignment="Center">
                         <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >
                             Developed BY 二阶堂真红

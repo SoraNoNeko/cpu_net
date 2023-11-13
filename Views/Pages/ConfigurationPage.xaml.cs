@@ -1,4 +1,5 @@
-﻿using cpu_net.ViewModel;
+﻿using cpu_net.Model;
+using cpu_net.ViewModel;
 using System;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -13,11 +14,9 @@ namespace cpu_net.Views.Pages
     /// </summary>
     public partial class ConfigurationPage : Page
     {
-        //定义一个委托
-        public delegate void Info(string infomation);
-        public Info info;
-
         public static ConfigurationPage instance;
+
+        SettingModel settingData = new SettingModel();
 
         public static ConfigurationPage Instance
         {
@@ -38,6 +37,25 @@ namespace cpu_net.Views.Pages
             {
                 UserViewModel vm = new();
                 secret.Password = vm.Password;
+            }
+            if (settingData.PathExist())
+            {
+                settingData = settingData.Read();
+                switch (settingData.Mode)
+                {
+                    case 0:
+                        ppp.IsChecked = true; break;
+                    case 1:
+                        cpu.IsChecked = true; break;
+                    case 2:
+                        auto.IsChecked = true; break;
+                    default:
+                        ppp.IsChecked = true; break;
+                }
+            }
+            else
+            {
+                ppp.IsChecked = true;
             }
         }
 
