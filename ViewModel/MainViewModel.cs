@@ -77,8 +77,16 @@ namespace cpu_net.ViewModel
             }
             set { bindButton_Click = value; }
         }
-        private record class LRes([property: JsonPropertyName("result")] string Result,
-                                  [property: JsonPropertyName("msga")] string Msga);
+
+        public class _LRes
+        {
+            public int result { get; set; }
+        }
+
+        public class LRes
+        {
+            public string msga { get; set; }
+        }
         public void LoginOnline()
         {
             SettingModel settingData=new SettingModel();
@@ -89,26 +97,31 @@ namespace cpu_net.ViewModel
                     $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
                 try
                 {               
-                    var res = HttpRequestHelper.HttpGetRequest(Login_url);
+                    //var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace(" ","");
+                    var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
+                    //System.Diagnostics.Debug.WriteLine(_res);
+                    var res = _res.Substring(1,_res.Length-2);
+                    System.Diagnostics.Debug.WriteLine(res);
                     if(res == null)
                     {
                         Info("网络错误");
                         return;
                     }
-                    var obj = JsonSerializer.Deserialize<List<LRes>>(res.Split(new string[] { "\r\n" }, StringSplitOptions.None)[0]);
-                    if (obj != null) 
+                    var _obj = JsonSerializer.Deserialize<_LRes>(res)!;
+                    if (_obj != null) 
                     {
-                        switch (obj[0].Result)
+                        switch (_obj.result)
                         {
-                            case "1":
+                            case 1:
                                 Info("登录成功");
                                 break;
-                            case "0":
+                            case 0:
                                 Info("登录失败");
-                                switch(obj[0].Msga)
+                                var obj = JsonSerializer.Deserialize<LRes>(res)!;
+                                switch (obj.msga)
                                 {
                                     default:
-                                        Info($"Error Message: {obj[0].Msga}");
+                                        Info($"Error Message: {obj.msga}");
                                         break;
                                     case "ldap auth error":
                                         Info("密码错误");
