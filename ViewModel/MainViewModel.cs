@@ -13,6 +13,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using static System.Net.WebRequestMethods;
@@ -25,17 +26,60 @@ namespace cpu_net.ViewModel
         public MainViewModel() 
         { 
         }
-        private string? txtLog;
 
-        public String? TxtLog
+        private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
+        public static void TextLog(string log)
         {
-            get { return txtLog; }
-            set { txtLog = value; OnPropertyChanged(); }
+            var now = DateTime.Now;
+            var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
+            var _log = $"{DateTime.Now.ToString("HH:mm")}  "+log + "\r\n";
+            try
+            {
+                //设置读写锁为写入模式独占资源，其他写入请求需要等待本次写入结束之后才能继续写入
+                LogWriteLock.EnterWriteLock();
+                System.IO.File.AppendAllText(logpath, _log);
+            }
+            finally
+            {
+                //退出写入模式，释放资源占用
+                LogWriteLock.ExitWriteLock();
+            }
+        }
+
+        public static string ReadLog()
+        {
+            var now = DateTime.Now;
+            string fLog = "";
+            var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
+            if (System.IO.File.Exists(logpath))
+            {
+
+                try
+                {
+                    LogWriteLock.EnterReadLock();
+                    fLog = System.IO.File.ReadAllText(logpath);
+                }
+                finally
+                {
+                    LogWriteLock.ExitReadLock();
+                }
+            }
+            else
+            {
+                return "";
+            }
+            return fLog;
+        }
+
+        public String TxtLog
+        {
+            get { return ReadLog(); }
+            set { TextLog(value); OnPropertyChanged(); }
         }
 
         public void Info(string message)
         {
-             TxtLog = TxtLog + $"{DateTime.Now.ToString("HH:mm:dd")}  " + message + Environment.NewLine;
+            TxtLog = message;
         }
         private RelayCommand noticeButton_Click;
         public RelayCommand NoticeButton_Click
@@ -186,7 +230,7 @@ namespace cpu_net.ViewModel
 
                     //System.Diagnostics.Debug.WriteLine(_res);
                     var res = _res.Substring(1,_res.Length-2);
-                    System.Diagnostics.Debug.WriteLine(res);
+                    //System.Diagnostics.Debug.WriteLine(res);
                     if(res == null)
                     {
                         Info("网络错误");

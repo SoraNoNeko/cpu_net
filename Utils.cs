@@ -13,12 +13,12 @@ namespace cpu_net
         private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
         public static void LogWrite(Exception ex)
         {
-            if (!Directory.Exists("Log"))
+            if (!Directory.Exists("ErrorLog"))
             {
-                Directory.CreateDirectory("Log");
+                Directory.CreateDirectory("ErrorLog");
             }
             var now = DateTime.Now;
-            var logpath = @"Log\" + now.Year + "" + now.Month + "" + now.Day + ".log";
+            var logpath = @"ErrorLog\" + now.Year + "" + now.Month + "" + now.Day + ".log";
             var log = "\r\n----------------------" + DateTime.Now + " --------------------------\r\n"
                       + ex.Message
                       + "\r\n"

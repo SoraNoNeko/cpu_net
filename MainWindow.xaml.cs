@@ -2,6 +2,7 @@
 using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -16,13 +17,12 @@ namespace cpu_net
     public partial class MainWindow : Window
     {
         SettingModel settingData = new SettingModel();
-        ConfigurationPage ConfigurationPage = new ConfigurationPage();
-
+        ConfigurationPage configurationPage = new ConfigurationPage();
+        HomePage homePage = new HomePage();//实例化HomePage，初始选择页homePage
         public MainWindow()
         {
             InitializeComponent();
             DataContext = new MainViewModel();
-            HomePage homePage = new HomePage();//实例化HomePage，初始选择页homePage
             PageFrame.Content = new Frame() { Content = homePage };//mainwindow中建立frame，用来承载所有的page,用homePage作为初始页面
             Brush darkblue;
             Brush white;
@@ -31,7 +31,9 @@ namespace cpu_net
             white = (Brush)brushConverter.ConvertFrom("White");
             Home_Button.BorderBrush = darkblue;
             Conf_Button.BorderBrush = white;
+            //Debug.WriteLine("action1");
             TimerMain();
+            //Debug.WriteLine("action2");
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
@@ -52,6 +54,7 @@ namespace cpu_net
 
         public void TimerMain()
         {
+            //Debug.WriteLine("action3");
             timer = new Timer(LoginCheck, "", 21600000, 21600000);
             //timer.Dispose();
         }
@@ -59,14 +62,16 @@ namespace cpu_net
         private void LoginCheck(object? ob)
         {
             timer.Dispose();
+            //Debug.WriteLine("action4");
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
-                if (settingData.IsAutoLogin)
+                if (settingData.IsSetLogin)
                 {
-                    //Debug.WriteLine("count");
+                    Debug.WriteLine("count");
                     MainViewModel mainViewModel = new MainViewModel();
                     mainViewModel.LoginOnline();
+                    //homePage.LoginButton.Command.Execute(null);
                 }
             }
             TimerMain();
