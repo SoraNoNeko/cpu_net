@@ -65,7 +65,7 @@
                 <ColumnDefinition Width="8*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBox Name="textLog" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" Text="{Binding Path=TxtLog, Mode=TwoWay, Source={StaticResource mVM}}"/>
+            <TextBox Name="textLog" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" Text="{Binding Path=TxtLog, Mode=TwoWay, Source={StaticResource mVM},UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
     </Grid>
 </Page>

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -22,10 +23,39 @@ namespace cpu_net.ViewModel
 {
     public class MainViewModel: ViewModelBase
     {
-
+        SettingModel settingData = new SettingModel();
         public MainViewModel() 
         { 
         }
+
+        /*
+        private Timer timer;
+
+        public void TimerMain()
+        {
+            //Debug.WriteLine("action3");
+            //timer = new Timer(LoginCheck, "", 21600000, 21600000);
+            timer = new Timer(LoginCheck, "", 3000, 21600000);
+            //timer.Dispose();
+        }
+
+        private void LoginCheck(object? ob)
+        {
+            timer.Dispose();
+            //Debug.WriteLine("action4");
+            if (settingData.PathExist())
+            {
+                settingData = settingData.Read();
+                if (settingData.IsSetLogin)
+                {
+                    Debug.WriteLine("count");
+                    LoginOnline();
+                    //homePage.LoginButton.Command.Execute(null);
+                }
+            }
+            TimerMain();
+        }
+        */
 
         private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
         public static void TextLog(string log)
@@ -143,7 +173,6 @@ namespace cpu_net.ViewModel
         }
         public void LoginOnline()
         {
-            SettingModel settingData=new SettingModel();
             if (settingData.PathExist())
             {
                 var _IP = GetIP();

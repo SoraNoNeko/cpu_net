@@ -7,7 +7,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
+using System.Threading;
 using Timer = System.Threading.Timer;
+using static System.Net.Mime.MediaTypeNames;
+using System.Windows.Threading;
 
 namespace cpu_net
 {
@@ -18,6 +21,7 @@ namespace cpu_net
     {
         SettingModel settingData = new SettingModel();
         ConfigurationPage configurationPage = new ConfigurationPage();
+        MainViewModel mainViewModel = new MainViewModel();
         HomePage homePage = new HomePage();//实例化HomePage，初始选择页homePage
         public MainWindow()
         {
@@ -39,7 +43,6 @@ namespace cpu_net
                 settingData = settingData.Read();
                 if (settingData.IsAutoLogin) 
                 {
-                    MainViewModel mainViewModel = new MainViewModel();
                     mainViewModel.LoginOnline();
                 }
                 if (settingData.IsAutoMin)
@@ -50,31 +53,47 @@ namespace cpu_net
             
         }
 
+
         private Timer timer;
 
         public void TimerMain()
         {
             //Debug.WriteLine("action3");
             timer = new Timer(LoginCheck, "", 21600000, 21600000);
+            //timer = new Timer(LoginCheck, "", 3000, 21600000);
             //timer.Dispose();
         }
-
         private void LoginCheck(object? ob)
         {
             timer.Dispose();
+            loginCheck();
+            TimerMain();
+        }
+
+        private void loginCheck()
+        {
             //Debug.WriteLine("action4");
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
                 if (settingData.IsSetLogin)
                 {
-                    Debug.WriteLine("count");
-                    MainViewModel mainViewModel = new MainViewModel();
-                    mainViewModel.LoginOnline();
-                    //homePage.LoginButton.Command.Execute(null);
+                    //Debug.WriteLine("count");
+                    //MainViewModel mainViewModel = new MainViewModel();
+                    //mainViewModel.LoginOnline();
+
+                    Action invokeAction = new Action(loginCheck);
+                    if (!this.Dispatcher.CheckAccess())
+                    {
+                        this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
+                    }
+                    else
+                    {
+                        homePage.LoginButton.Command.Execute(null);
+                    }
+
                 }
             }
-            TimerMain();
         }
 
         public void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
