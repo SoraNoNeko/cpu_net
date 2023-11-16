@@ -14,7 +14,10 @@
 
 ## 苹果设备iPhone/iPad解决方法
 
-使用快捷指令：[链接](https://www.icloud.com/shortcuts/e35332a6d9ce49549cc4689a9e7ed729)
+使用快捷指令：[链接](https://www.icloud.com/shortcuts/e35332a6d9ce49549cc4689a9e7ed729)<br>
+
+![快捷指令](/qrcode.png "快捷指令")
+
 <p>使用前需要在三个文本框中填入相应信息，运营商注意注释<br>
 进入编辑的方式是点击右上角三个点</p>
 
