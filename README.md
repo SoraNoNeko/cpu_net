@@ -14,10 +14,12 @@
 
 ## 苹果设备iPhone/iPad解决方法
 
-<p>使用快捷指令：[链接](https://www.icloud.com/shortcuts/e35332a6d9ce49549cc4689a9e7ed729)</p>
+使用快捷指令：[链接](https://www.icloud.com/shortcuts/e35332a6d9ce49549cc4689a9e7ed729)
 <p>使用前需要在三个文本框中填入相应信息，运营商注意注释<br>
 进入编辑的方式是点击右上角三个点</p>
-<p>![示例](/ipad.png "Example")</p>
+
+![示例](/ipad.png "Example")
+
 <p>进阶玩法（连上WiFi自动登录）：</p>
 <p>打开快捷指令 —> 自动化 —> 新自动化 —> 选择“无线局域网” —> “网络”选取自己的WiFi —> 选择“立即运行”<br>
 —> 下一步 —> 选择“连接药大网络” —> 完成</p>
