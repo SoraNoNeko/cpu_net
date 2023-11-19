@@ -507,7 +507,7 @@ namespace cpu_net.ViewModel
             if (String.IsNullOrEmpty(Code) | String.IsNullOrEmpty(Password))
             {
                 MessageBox.Show("请输入学号和密码","Attention");
-            }else if (Key == 0)
+            }else if (Key == 0 & Mode != 1)
             {
                 MessageBox.Show("请选择运营商", "Attention");
             }

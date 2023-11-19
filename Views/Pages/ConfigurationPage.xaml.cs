@@ -74,8 +74,7 @@ namespace cpu_net.Views.Pages
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
-            Hyperlink link = sender as Hyperlink;
-            System.Diagnostics.Process.Start("explorer.exe", link.NavigateUri.AbsoluteUri);
+            System.Diagnostics.Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
         }
     }
 }

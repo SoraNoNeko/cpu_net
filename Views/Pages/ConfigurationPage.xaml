@@ -37,11 +37,12 @@
                             <RowDefinition Height="90"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="320"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="320"/>
+                            <ColumnDefinition Width="2*" MinWidth="120"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Row="0" Grid.Column="0" Text="账户信息设置" Background="White" BorderThickness="0" FontSize="24" IsReadOnly="True"/>
-                        <Grid Grid.Row="1">
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="账户信息设置" Background="White" BorderThickness="0" FontSize="24" IsReadOnly="True"/>
+                        <Grid Grid.Row="1" Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="250"/>
@@ -65,7 +66,7 @@
                                 <!--ComboBoxItem Name="telecom">电信</ComboBoxItem-->
                             </ComboBox>
                         </Grid>
-                        <Grid Grid.Column="1" Grid.RowSpan="2">
+                        <Grid Grid.Column="2" Grid.RowSpan="2">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="12*"/>
@@ -90,12 +91,19 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="40"/>
                     </Grid.RowDefinitions>
-                    <StackPanel Margin="20,0,0,0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Label HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15">登录模式:</Label>
-                        <RadioButton Name="ppp" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=PppButton_Click,Source={StaticResource userVM}}">宽带</RadioButton>
-                        <RadioButton Name="cpu" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=CpuButton_Click,Source={StaticResource userVM}}">CPU</RadioButton>
-                        <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
-                    </StackPanel>
+                    <Grid Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="2*" MinWidth="120"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Label HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15">登录模式:</Label>
+                            <RadioButton Name="ppp" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=PppButton_Click,Source={StaticResource userVM}}">宽带</RadioButton>
+                            <RadioButton Name="cpu" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=CpuButton_Click,Source={StaticResource userVM}}">CPU</RadioButton>
+                            <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
+                        </StackPanel>
+                    </Grid>
                     <Button Grid.Row="1" Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
                     <Button Grid.Row="1" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
                     <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
@@ -103,7 +111,7 @@
                         <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >
                             Developed BY 二阶堂真红
                         </TextBox><LineBreak/>
-                            <Hyperlink NavigateUri="https://github.com/SoraNoNeko/cpu_net" 
+                            <Hyperlink 
                             Click="Hyperlink_Click" FontSize="16">代码发布页</Hyperlink>
                     </TextBlock>
                 </Grid>
