@@ -176,7 +176,10 @@ namespace cpu_net.ViewModel
         {
             public string ss5 { get; set; }
         }
-
+        public class ret
+        {
+            public int ret_code { get; set; }
+        }
         public class LRes
         {
             public string msga { get; set; }
@@ -285,18 +288,16 @@ namespace cpu_net.ViewModel
                                         Info("登录成功");
                                         break;
                                     case "0":
-                                        Info("登录失败");
-                                        var obj = JsonSerializer.Deserialize<LRes>(res)!;
-                                        switch (obj.msga)
+                                        var obj = JsonSerializer.Deserialize<ret>(res)!;
+                                        switch (obj.ret_code)
                                         {
                                             default:
-                                                Info($"Error Message: {obj.msga}");
+                                                Info("登录失败");
+                                                var msg = JsonSerializer.Deserialize<lRes>(res)!;
+                                                Info($"Error Message: {msg.msg}");
                                                 break;
-                                            case "ldap auth error":
-                                                Info("密码错误");
-                                                break;
-                                            case "unbind isp uid":
-                                                Info("未绑定宽带账号");
+                                            case 2:
+                                                Info("本设备已在线，请勿重复登录");
                                                 break;
                                         }
                                         break;
