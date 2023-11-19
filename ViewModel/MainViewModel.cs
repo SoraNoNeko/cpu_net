@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -166,10 +167,23 @@ namespace cpu_net.ViewModel
         {
             public int result { get; set; }
         }
+        public class _lRes
+        {
+            public string result { get; set; }
+        }
+
+        public class V46ip
+        {
+            public string ss5 { get; set; }
+        }
 
         public class LRes
         {
             public string msga { get; set; }
+        }
+        public class lRes
+        {
+            public string msg { get; set; }
         }
         public void LoginOnline()
         {
@@ -206,6 +220,7 @@ namespace cpu_net.ViewModel
                         break;
                 }
                 string Login_url;
+                string _res = "";
                 switch (_mode) {
                     case 0:
                         Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
@@ -213,7 +228,18 @@ namespace cpu_net.ViewModel
                         break;
                     case 1:
                         string local_ip;
-                        local_ip = _IP;
+                        try{
+                            string remote_url = "http://192.168.199.21/drcom/chkstatus?callback=dr1002";
+                            string res_remo = HttpRequestHelper.HttpGetRequest(remote_url).Replace("dr1002", "").Replace(" ", "");
+                            var res = res_remo.Substring(1, res_remo.Length - 2);
+                            var _obj = JsonSerializer.Deserialize<V46ip>(res)!;
+                            local_ip = _obj.ss5;
+                        }
+                        catch(Exception e){
+                            //Info(e.Message);
+                            local_ip = _IP;
+                        }
+                        //Info(local_ip);
                         Login_url = $"http://192.168.199.21:801/eportal/?c=Portal&a=login&callback=dr1004&login_method=1&user_account=%2C1%2C{settingData.Username}&user_password={settingData.Password}" +
                             $"&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=3.3.3&v=1954";
                         break;
@@ -225,7 +251,6 @@ namespace cpu_net.ViewModel
                 try
                 {
                     //var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace(" ","");
-                    string _res;
                     switch (_mode)
                     {
                         case 0:
@@ -247,31 +272,65 @@ namespace cpu_net.ViewModel
                         Info("网络错误");
                         return;
                     }
-                    var _obj = JsonSerializer.Deserialize<_LRes>(res)!;
-                    if (_obj != null) 
+
+                    switch (_mode)
                     {
-                        switch (_obj.result)
-                        {
-                            case 1:
-                                Info("登录成功");
-                                break;
-                            case 0:
-                                Info("登录失败");
-                                var obj = JsonSerializer.Deserialize<LRes>(res)!;
-                                switch (obj.msga)
+                        case 1:
+                            var _Obj = JsonSerializer.Deserialize<_lRes>(res)!;
+                            if (_Obj != null)
+                            {
+                                switch (_Obj.result)
                                 {
-                                    default:
-                                        Info($"Error Message: {obj.msga}");
+                                    case "1":
+                                        Info("登录成功");
                                         break;
-                                    case "ldap auth error":
-                                        Info("密码错误");
-                                        break;
-                                    case "unbind isp uid":
-                                        Info("未绑定宽带账号");
+                                    case "0":
+                                        Info("登录失败");
+                                        var obj = JsonSerializer.Deserialize<LRes>(res)!;
+                                        switch (obj.msga)
+                                        {
+                                            default:
+                                                Info($"Error Message: {obj.msga}");
+                                                break;
+                                            case "ldap auth error":
+                                                Info("密码错误");
+                                                break;
+                                            case "unbind isp uid":
+                                                Info("未绑定宽带账号");
+                                                break;
+                                        }
                                         break;
                                 }
-                                break;
-                        }
+                            }
+                            break;
+                        case 0:
+                            var _obj = JsonSerializer.Deserialize<_LRes>(res)!;
+                            if (_obj != null)
+                            {
+                                switch (_obj.result)
+                                {
+                                    case 1:
+                                        Info("登录成功");
+                                        break;
+                                    case 0:
+                                        Info("登录失败");
+                                        var obj = JsonSerializer.Deserialize<LRes>(res)!;
+                                        switch (obj.msga)
+                                        {
+                                            default:
+                                                Info($"Error Message: {obj.msga}");
+                                                break;
+                                            case "ldap auth error":
+                                                Info("密码错误");
+                                                break;
+                                            case "unbind isp uid":
+                                                Info("未绑定宽带账号");
+                                                break;
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
                     }
                 }
                 catch (HttpRequestException e)
@@ -282,6 +341,7 @@ namespace cpu_net.ViewModel
                 catch(JsonException e)
                 {
                     Info("JSON解析失败");
+                    Info(_res);
                 }
             }
             else
