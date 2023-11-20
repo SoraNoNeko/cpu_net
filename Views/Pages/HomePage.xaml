@@ -46,7 +46,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="0">
-                        <Button Content="宽带登录" Name="LoginButton" Command="{Binding Path=LoginButton_Click,Source={StaticResource mVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="120" Height="45"/>
+                        <Button Content="宽带登录" Name="LoginButton" Command="{Binding Path=LoginButton_Click,Source={StaticResource mVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="120" Height="45" Click="LoginButton_Click"/>
                     </Grid>
                     <Grid Grid.Column="1">
                         <Button Content="运营商绑定" Name="BindButton" Command="{Binding Path=BindButton_Click,Source={StaticResource mVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="120" Height="45"/>

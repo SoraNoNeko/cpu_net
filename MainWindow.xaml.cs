@@ -2,9 +2,9 @@
 using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Timer = System.Threading.Timer;
 
@@ -15,9 +15,17 @@ namespace cpu_net
     /// </summary>
     public partial class MainWindow : Window
     {
+        BrushConverter brushConverter = new BrushConverter();
+        Brush darkblue;
+        Brush white;
+        HomePage homePage = new HomePage();
+        ConfigurationPage configurationPage = new ConfigurationPage();
         public MainWindow()
         {
             InitializeComponent();
+            homePage.ParentWindow = this;
+            configurationPage.ParentWindow = this;
+            ChangePage("home");
             //Debug.WriteLine("action1");
             TimerMain();
             //Debug.WriteLine("action2");
@@ -35,7 +43,6 @@ namespace cpu_net
                     this.Visibility = Visibility.Hidden;
                 }
             }
-
         }
 
 
@@ -72,9 +79,30 @@ namespace cpu_net
             }
         }
         */
+        private void ChangePage(string name)
+        {
+            darkblue = (Brush)brushConverter.ConvertFrom("DarkBlue");
+            white = (Brush)brushConverter.ConvertFrom("White");
+            switch (name)
+            {
+                case "home":
+                    Home_Button.BorderBrush = darkblue;
+                    Conf_Button.BorderBrush = white;
+                    var home = new HomePage();
+                    home.ParentWindow = this;
+                    PageFrame.Content = home;
+                    break;
+                case "conf":
+                    Home_Button.BorderBrush = white;
+                    Conf_Button.BorderBrush = darkblue;
+                    var conf = new ConfigurationPage();
+                    conf.ParentWindow = this;
+                    PageFrame.Content = conf;
+                    break;
+            }
+        }
         private void loginCheck()
         {
-            HomePage homePage = new HomePage();
             SettingModel settingData = new SettingModel();
             //Debug.WriteLine("action4");
             if (settingData.PathExist())
@@ -89,7 +117,7 @@ namespace cpu_net
                     Action invokeAction = new Action(loginCheck);
                     if (!this.Dispatcher.CheckAccess())
                     {
-                        this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
+                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction);
                     }
                     else
                     {
@@ -158,6 +186,16 @@ namespace cpu_net
                 //System.Windows.Application.Current.Shutdown();
                 System.Environment.Exit(0);
             }
+        }
+
+        private void Home_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ChangePage("home");
+        }
+
+        private void Conf_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ChangePage("conf");
         }
     }
 }

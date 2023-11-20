@@ -104,7 +104,7 @@
                             <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
                         </StackPanel>
                     </Grid>
-                    <Button Grid.Row="1" Grid.Column="0" Content="保存" Name="SaveButton" Command="{Binding Path=SaveButton_Click,Source={StaticResource userVM}}" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <Button Grid.Row="1" Grid.Column="0" Content="保存" Name="SaveButton" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40" Click="SaveButton_Click"/>
                     <Button Grid.Row="1" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
                     <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
                                Block.TextAlignment="Center" VerticalAlignment="Center">

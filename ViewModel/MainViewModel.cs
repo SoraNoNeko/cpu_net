@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Messaging;
 using cpu_net.Model;
 using cpu_net.ViewModel.Base;
-using cpu_net.Views.Pages;
 using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
@@ -17,51 +16,14 @@ using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
-using static System.Net.Mime.MediaTypeNames;
-using Brush = System.Windows.Media.Brush;
 
 namespace cpu_net.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        BrushConverter brushConverter = new BrushConverter();
-        Brush darkblue;
-        Brush white;
-        PageModel pageModel = new PageModel();
         SettingModel settingData = new SettingModel();
         public MainViewModel()
         {
-            ChangePage("/Views/Pages/HomePage.xaml");
-        }
-
-        public void HomeSel()
-        {
-            ChangePage("/Views/Pages/HomePage.xaml");
-        }
-        public void ConfSel()
-        {
-            ChangePage("/Views/Pages/ConfigurationPage.xaml");
-        }
-
-        private void ChangePage(object obj)
-        {
-            darkblue = (Brush)brushConverter.ConvertFrom("DarkBlue");
-            white = (Brush)brushConverter.ConvertFrom("White");
-            PageName = obj.ToString();
-            switch (PageName)
-            {
-                case "/Views/Pages/HomePage.xaml":
-                    Home_B = darkblue;
-                    Conf_B = white;
-                    break;
-                case "/Views/Pages/ConfigurationPage.xaml":
-                    Home_B = white;
-                    Conf_B = darkblue;
-                    break;
-            }
         }
 
         /*
@@ -103,7 +65,7 @@ namespace cpu_net.ViewModel
             {
                 //设置读写锁为写入模式独占资源，其他写入请求需要等待本次写入结束之后才能继续写入
                 LogWriteLock.EnterWriteLock();
-                System.IO.File.AppendAllText(logpath, _log);
+                File.AppendAllText(logpath, _log);
             }
             finally
             {
@@ -184,68 +146,6 @@ namespace cpu_net.ViewModel
 
             }
             set { bindButton_Click = value; }
-        }
-        private RelayCommand homeButton_Click;
-        public RelayCommand HomeButton_Click
-        {
-            get
-            {
-                if (homeButton_Click == null)
-                    homeButton_Click = new RelayCommand(() => HomeSel());
-                return homeButton_Click;
-
-            }
-            set { homeButton_Click = value; }
-        }
-        private RelayCommand confButton_Click;
-        public RelayCommand ConfButton_Click
-        {
-            get
-            {
-                if (confButton_Click == null)
-                    confButton_Click = new RelayCommand(() => ConfSel());
-                return confButton_Click;
-
-            }
-            set { confButton_Click = value; }
-        }
-
-        //private string _pageName;
-        public string PageName
-        {
-            get {//return _pageName;
-                return pageModel.PageName;
-            }
-            set { //_pageName = value;
-                pageModel.PageName = value;
-                OnPropertyChanged(); 
-            }
-        }
-        //private Brush _home_B;
-        public Brush Home_B
-        {
-            get {
-                //return _home_B;
-                return pageModel.Home_B;
-            }
-            set {//_home_B = value;
-                pageModel.Home_B = value;
-                OnPropertyChanged();
-            }
-        }
-
-        //private Brush _conf_B;
-        public Brush Conf_B
-        {
-            get {
-                //return _conf_B;
-                return pageModel.Conf_B;
-                }
-            set { 
-                //_conf_B = value;
-                pageModel.Conf_B = value;
-                OnPropertyChanged();
-            }
         }
 
         public string GetIP()
@@ -448,8 +348,8 @@ namespace cpu_net.ViewModel
             }
             else
             {
-                Info("No Config Found");                
-                var result = MessageBox.Show("请在设置中添加账号信息", "提示");
+                Info("No Config Found");
+                //var result = MessageBox.Show("请在设置中添加账号信息", "提示");
                 /*
                 if (result == MessageBoxResult.OK)
                 {
@@ -465,7 +365,6 @@ namespace cpu_net.ViewModel
         private void NoticeOnline()
         {
             System.Diagnostics.Process.Start("explorer.exe", "https://lic.cpu.edu.cn/ee/c6/c7550a192198/page.htm");
-            Info(pageModel.PageName);
         }
         private void BindOnline()
         {
@@ -495,7 +394,6 @@ namespace cpu_net.ViewModel
         AutoStart autoStart = new AutoStart();
         public UserViewModel()
         {
-            WeakReferenceMessenger.Default.Register<string>(this, Receive);
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
@@ -539,7 +437,7 @@ namespace cpu_net.ViewModel
         public bool IsAutoLogin
         {
             get { return isAutoLogin; }
-            set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; OnPropertyChanged(); }
+            set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; Debug.WriteLine(Password) ; OnPropertyChanged(); }
         }
 
         private bool isAutoMin;
@@ -638,6 +536,7 @@ namespace cpu_net.ViewModel
             set { autoChecked = value; pppChecked = false; cpuChecked = false; Mode = 2; settingData.Mode = Mode; OnPropertyChanged(); }
         }
         */
+        /*
         private RelayCommand saveButton_Click;
         public RelayCommand SaveButton_Click
         {
@@ -681,27 +580,29 @@ namespace cpu_net.ViewModel
             }
             if (string.IsNullOrEmpty(Code) | string.IsNullOrEmpty(Password))
             {
-                MessageBox.Show("请输入学号和密码", "Attention");
+                //MessageBox.Show("请输入学号和密码", "Attention");
             }
             else if (Key == 0 & Mode != 1)
             {
-                MessageBox.Show("请选择运营商", "Attention");
+                //MessageBox.Show("请选择运营商", "Attention");
             }
             else
             {
                 settingData.Username = Code;
                 settingData.Password = Password;
+                Debug.WriteLine(Password);
                 settingData.Carrier = carrier;
                 settingData.Key = Key;
                 settingData.Save();
-                var result = MessageBox.Show("保存成功", "Info");
+        */
+                //var result = MessageBox.Show("保存成功", "Info");
                 /*
                 if (result == MessageBoxResult.OK)
                 {
                     HomeSelected();
-                }*/
+                }
             }
-        }
+        }*/
 
         /*
         MainViewModel mainViewModel = new MainViewModel();
@@ -753,7 +654,6 @@ namespace cpu_net.ViewModel
             set
             {
                 comboxItem = value;
-                WeakReferenceMessenger.Default.Send<string>(comboxItem.Text);
                 OnPropertyChanged();
             }
         }
