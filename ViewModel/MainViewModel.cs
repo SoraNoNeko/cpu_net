@@ -381,7 +381,6 @@ namespace cpu_net.ViewModel
     public class UserViewModel : ViewModelBase
     {
         SettingModel settingData = new SettingModel();
-        AutoStart autoStart = new AutoStart();
         public UserViewModel()
         {
             WeakReferenceMessenger.Default.Register<string>(this, Receive);
