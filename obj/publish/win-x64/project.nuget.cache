@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "yecaK+liw3KmHX8DryisYSLSEE959mi+iSztIzCfMmuiO94a8Qq7gwfeQamyoKaIKzO10RV4RnU2Pxy943zcmg==",
+  "dgSpecHash": "dfJ1WiLLMjBDH4RvaC1Z6M8Scwjeq+uhuikvOWSsTalcD7PqHS6oZG2j/V100iXOjomQGcsWzu/A1GlpAK6Gyg==",
   "success": true,
   "projectFilePath": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\a1392\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\hardcodet.notifyicon.wpf\\1.1.0\\hardcodet.notifyicon.wpf.1.1.0.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\prism.core\\8.1.97\\prism.core.8.1.97.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.configuration.configurationmanager\\8.0.0\\system.configuration.configurationmanager.8.0.0.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.runtime.caching\\8.0.0\\system.runtime.caching.8.0.0.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.security.cryptography.protecteddata\\8.0.0\\system.security.cryptography.protecteddata.8.0.0.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\6.0.24\\microsoft.netcore.app.runtime.win-x64.6.0.24.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\6.0.24\\microsoft.windowsdesktop.app.runtime.win-x64.6.0.24.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\6.0.24\\microsoft.aspnetcore.app.runtime.win-x64.6.0.24.nupkg.sha512"

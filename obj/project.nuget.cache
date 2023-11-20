@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "e3bixKwTLPKMBkFgiIrrkpYiRjEQqlBaxLC3gz/YEBBlT6W6zPlG9pH/qtdRQSZ6SZNU53kSPKeuygMBEylQDg==",
+  "dgSpecHash": "+NBGZtvkZWq7iuJQTjimHA7GPJwa1pxqqgFcOWm35dvXjxUPr1L91XqN1XolJroJrEe5XxlmpQn2kuPtH5zdHA==",
   "success": true,
   "projectFilePath": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\a1392\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
     "C:\\Users\\a1392\\.nuget\\packages\\hardcodet.notifyicon.wpf\\1.1.0\\hardcodet.notifyicon.wpf.1.1.0.nupkg.sha512",
-    "C:\\Users\\a1392\\.nuget\\packages\\prism.core\\8.1.97\\prism.core.8.1.97.nupkg.sha512"
+    "C:\\Users\\a1392\\.nuget\\packages\\prism.core\\8.1.97\\prism.core.8.1.97.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.configuration.configurationmanager\\8.0.0\\system.configuration.configurationmanager.8.0.0.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.runtime.caching\\8.0.0\\system.runtime.caching.8.0.0.nupkg.sha512",
+    "C:\\Users\\a1392\\.nuget\\packages\\system.security.cryptography.protecteddata\\8.0.0\\system.security.cryptography.protecteddata.8.0.0.nupkg.sha512"
   ],
   "logs": []
 }

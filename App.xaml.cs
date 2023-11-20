@@ -1,14 +1,8 @@
 ﻿using cpu_net.Model;
 using Hardcodet.Wpf.TaskbarNotification;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using Timer = System.Threading.Timer;
 
 namespace cpu_net
 {
@@ -97,7 +91,7 @@ namespace cpu_net
         }
         private static void HandleException(Exception ex)
         {
-             MessageBox.Show("出错了，请与开发人员联系："+ ex.Message);
+            MessageBox.Show("出错了，请与开发人员联系：" + ex.Message);
             //记录日志
             Utils.LogWrite(ex);
 

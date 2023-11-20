@@ -3,44 +3,36 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace cpu_net.ViewModel
 {
     public class AutoStart
     {
-        #region 公开
         /// <summary>
-        /// 唯一实例，也可以自定义实例
+        /// 快捷方式名称-任意自定义
         /// </summary>
-        public static AutoStart Instance { get; private set; } = new AutoStart();
+        private const string QuickName = "TCNVMClient";
 
         /// <summary>
-        /// 快捷方式描述，默认值是当前的进程名
+        /// 自动获取系统自动启动目录
         /// </summary>
-        public string QuickDescribe { get; set; } = Process.GetCurrentProcess().ProcessName;
+        private string systemStartPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.Startup); } }
 
         /// <summary>
-        /// 快捷方式名称，默认值是当前的进程名
+        /// 自动获取程序完整路径
         /// </summary>
-        public string QuickName { get; set; } = Process.GetCurrentProcess().ProcessName;
+        private string appAllPath { get { return Process.GetCurrentProcess().MainModule.FileName; } }
 
         /// <summary>
-        /// 自启动窗口类型，默认值是正常窗口
+        /// 自动获取桌面目录
         /// </summary>
-        public WshWindowStyle WindowStyle { get; set; } = WshWindowStyle.WshNormalFocus;
+        private string desktopPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory); } }
 
         /// <summary>
         /// 设置开机自动启动-只需要调用改方法就可以了参数里面的bool变量是控制开机启动的开关的，默认为开启自启启动
         /// </summary>
         /// <param name="onOff">自启开关</param>
-        public void SetAutoStart(bool onOff = false)
+        public void SetMeAutoStart(bool onOff = true)
         {
             if (onOff)//开机启动
             {
@@ -56,7 +48,7 @@ namespace cpu_net.ViewModel
                 }
                 else if (shortcutPaths.Count < 1)//不存在则创建快捷方式
                 {
-                    CreateShortcut(systemStartPath, QuickName, appAllPath, QuickDescribe, WindowStyle);
+                    CreateShortcut(systemStartPath, QuickName, appAllPath, "中吉售货机");
                 }
             }
             else//开机不启动
@@ -77,50 +69,6 @@ namespace cpu_net.ViewModel
         }
 
         /// <summary>
-        /// 在桌面上创建快捷方式-如果需要可以调用
-        /// </summary>
-        public void SetDesktopQuick(bool isCreate)
-        {
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            List<string> shortcutPaths = GetQuickFromFolder(desktopPath, appAllPath);
-            if (isCreate)
-            {
-                //没有就创建
-                if (shortcutPaths.Count < 1)
-                {
-                    CreateShortcut(desktopPath, QuickName, appAllPath, QuickDescribe, WshWindowStyle.WshNormalFocus);
-                }
-            }
-            else
-            {
-                //有就删除
-                for (int i = 0; i < shortcutPaths.Count; i++)
-                {
-                    DeleteFile(shortcutPaths[i]);
-                }
-            }
-        }
-
-        #endregion 公开
-
-        #region 私有
-
-        /// <summary>
-        /// 自动获取系统自动启动目录
-        /// </summary>
-        private string systemStartPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-
-        /// <summary>
-        /// 自动获取程序完整路径
-        /// </summary>
-        private string appAllPath = Process.GetCurrentProcess().MainModule.FileName;
-
-        /// <summary>
-        /// 自动获取桌面目录
-        /// </summary>
-        private string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-
-        /// <summary>
         ///  向目标路径创建指定文件的快捷方式
         /// </summary>
         /// <param name="directory">目标目录</param>
@@ -129,32 +77,21 @@ namespace cpu_net.ViewModel
         /// <param name="description">描述</param>
         /// <param name="iconLocation">图标地址</param>
         /// <returns>成功或失败</returns>
-        private bool CreateShortcut(string directory, string shortcutName, string targetPath, string description, WshWindowStyle windowStyle, string iconLocation = null)
+        private bool CreateShortcut(string directory, string shortcutName, string targetPath, string description = null, string iconLocation = null)
         {
             try
             {
-                //目录不存在则创建
-                if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
-                //合成路径
-                string shortcutPath = Path.Combine(directory, string.Format("{0}.lnk", shortcutName));
-                //存在则不创建
-                if (System.IO.File.Exists(shortcutPath)) return true;
+                if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);                         //目录不存在则创建
                 //添加引用 Com 中搜索 Windows Script Host Object Model
+                string shortcutPath = Path.Combine(directory, string.Format("{0}.lnk", shortcutName));          //合成路径
                 WshShell shell = new IWshRuntimeLibrary.WshShell();
-                //创建快捷方式对象
-                IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);
-                //指定目标路径
-                shortcut.TargetPath = targetPath;
-                //设置起始位置
-                shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);
-                //设置运行方式，默认为常规窗口
-                shortcut.WindowStyle = (int)windowStyle;
-                //设置备注
-                shortcut.Description = description;
-                //设置图标路径
-                shortcut.IconLocation = string.IsNullOrWhiteSpace(iconLocation) ? targetPath : iconLocation;
-                //保存快捷方式
-                shortcut.Save();
+                IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);    //创建快捷方式对象
+                shortcut.TargetPath = targetPath;                                                               //指定目标路径
+                shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);                                  //设置起始位置
+                shortcut.WindowStyle = 1;                                                                       //设置运行方式，默认为常规窗口
+                shortcut.Description = description;                                                             //设置备注
+                shortcut.IconLocation = string.IsNullOrWhiteSpace(iconLocation) ? targetPath : iconLocation;    //设置图标路径
+                shortcut.Save();                                                                                //保存快捷方式
                 return true;
             }
             catch (Exception ex)
@@ -231,7 +168,22 @@ namespace cpu_net.ViewModel
                 System.IO.File.Delete(path);
             }
         }
-        #endregion 私有
+
+        /// <summary>
+        /// 在桌面上创建快捷方式-如果需要可以调用
+        /// </summary>
+        /// <param name="desktopPath">桌面地址</param>
+        /// <param name="appPath">应用路径</param>
+        public void CreateDesktopQuick(string desktopPath = "", string quickName = "", string appPath = "")
+        {
+            List<string> shortcutPaths = GetQuickFromFolder(desktopPath, appPath);
+            //如果没有则创建
+            if (shortcutPaths.Count < 1)
+            {
+                CreateShortcut(desktopPath, quickName, appPath, "软件描述");
+            }
+        }
     }
+
 
 }

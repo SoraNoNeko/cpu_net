@@ -6,6 +6,7 @@ namespace cpu_net.ViewModel
 {
     public class NotifyIconViewModel
     {
+        private WindowState windowState;
         /// <summary>
         /// 激活窗口
         /// </summary>
@@ -19,6 +20,7 @@ namespace cpu_net.ViewModel
                     {
                         Application.Current.MainWindow.Visibility = Visibility.Visible;
                         Application.Current.MainWindow.Show();
+                        Application.Current.MainWindow.WindowState = windowState;
                         Application.Current.MainWindow.Activate();
                     }
                 };
@@ -36,6 +38,7 @@ namespace cpu_net.ViewModel
                 {
                     CommandAction = () =>
                     {
+                        windowState = Application.Current.MainWindow.WindowState;
                         Application.Current.MainWindow.Visibility = Visibility.Hidden;
                     }
                 };
@@ -50,7 +53,17 @@ namespace cpu_net.ViewModel
         {
             get
             {
-                return new DelegateCommand { CommandAction = () => Application.Current.Shutdown() };
+                return new DelegateCommand
+                {
+                    CommandAction = () =>
+                    {
+                        Application.Current.MainWindow.Visibility = Visibility.Visible;
+                        Application.Current.MainWindow.Show();
+                        Application.Current.MainWindow.WindowState = windowState;
+                        Application.Current.MainWindow.Activate();
+                        Application.Current.MainWindow.Close();
+                    }
+                };
             }
         }
 

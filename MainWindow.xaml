@@ -12,6 +12,9 @@
         StateChanged="Window_StateChanged"
         Title="CPU网络连接" Height="450" Width="600" TextBlock.TextAlignment="Center"
         MinHeight="450" MinWidth="600">
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -25,14 +28,14 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" x:Name="Home_Button" Content="主    页" Padding="100,0,100,0" HorizontalAlignment="Center" VerticalAlignment="Center" Click="Home_Selected" BorderBrush="White" FontSize="16" Foreground="Black" BorderThickness="0,0,0,1" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
-            <Button Grid.Column="1" x:Name="Conf_Button" Content="设    置" Padding="100,0,100,0" HorizontalAlignment="Center" VerticalAlignment="Center" Click="Configuration_Selected" BorderBrush="White" FontSize="16" Foreground="Black" BorderThickness="0,0,0,1" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+            <Button Grid.Column="0" x:Name="Home_Button" Content="主    页" Padding="100,0,100,0" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{Binding Path=HomeButton_Click}" BorderBrush="{Binding Home_B}" FontSize="16" Foreground="Black" BorderThickness="0,0,0,1" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+            <Button Grid.Column="1" x:Name="Conf_Button" Content="设    置" Padding="100,0,100,0" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{Binding Path=ConfButton_Click}" BorderBrush="{Binding Conf_B}" FontSize="16" Foreground="Black" BorderThickness="0,0,0,1" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
         </Grid>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Frame x:Name="PageFrame" NavigationUIVisibility="Hidden"/>
+            <Frame x:Name="PageFrame" NavigationUIVisibility="Hidden" Source="{Binding Path=PageName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
     </Grid>
 </Window>

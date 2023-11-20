@@ -1,32 +1,67 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using cpu_net.Model;
+using cpu_net.ViewModel.Base;
+using cpu_net.Views.Pages;
 using Prism.Mvvm;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using static System.Net.WebRequestMethods;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
+using static System.Net.Mime.MediaTypeNames;
+using Brush = System.Windows.Media.Brush;
 
 namespace cpu_net.ViewModel
 {
-    public class MainViewModel: ViewModelBase
+    public class MainViewModel : ViewModelBase
     {
+        BrushConverter brushConverter = new BrushConverter();
+        Brush darkblue;
+        Brush white;
+        PageModel pageModel = new PageModel();
         SettingModel settingData = new SettingModel();
-        public MainViewModel() 
-        { 
+        public MainViewModel()
+        {
+            ChangePage("/Views/Pages/HomePage.xaml");
+        }
+
+        public void HomeSel()
+        {
+            ChangePage("/Views/Pages/HomePage.xaml");
+        }
+        public void ConfSel()
+        {
+            ChangePage("/Views/Pages/ConfigurationPage.xaml");
+        }
+
+        private void ChangePage(object obj)
+        {
+            darkblue = (Brush)brushConverter.ConvertFrom("DarkBlue");
+            white = (Brush)brushConverter.ConvertFrom("White");
+            PageName = obj.ToString();
+            switch (PageName)
+            {
+                case "/Views/Pages/HomePage.xaml":
+                    Home_B = darkblue;
+                    Conf_B = white;
+                    break;
+                case "/Views/Pages/ConfigurationPage.xaml":
+                    Home_B = white;
+                    Conf_B = darkblue;
+                    break;
+            }
         }
 
         /*
@@ -63,7 +98,7 @@ namespace cpu_net.ViewModel
         {
             var now = DateTime.Now;
             var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
-            var _log = $"{DateTime.Now.ToString("HH:mm")}  "+log + "\r\n";
+            var _log = $"{DateTime.Now.ToString("HH:mm")}  " + log + "\r\n";
             try
             {
                 //设置读写锁为写入模式独占资源，其他写入请求需要等待本次写入结束之后才能继续写入
@@ -82,13 +117,13 @@ namespace cpu_net.ViewModel
             var now = DateTime.Now;
             string fLog = "";
             var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
-            if (System.IO.File.Exists(logpath))
+            if (File.Exists(logpath))
             {
 
                 try
                 {
                     LogWriteLock.EnterReadLock();
-                    fLog = System.IO.File.ReadAllText(logpath);
+                    fLog = File.ReadAllText(logpath);
                 }
                 finally
                 {
@@ -102,7 +137,7 @@ namespace cpu_net.ViewModel
             return fLog;
         }
 
-        public String TxtLog
+        public string TxtLog
         {
             get { return ReadLog(); }
             set { TextLog(value); OnPropertyChanged(); }
@@ -112,6 +147,7 @@ namespace cpu_net.ViewModel
         {
             TxtLog = message;
         }
+
         private RelayCommand noticeButton_Click;
         public RelayCommand NoticeButton_Click
         {
@@ -149,7 +185,69 @@ namespace cpu_net.ViewModel
             }
             set { bindButton_Click = value; }
         }
-        
+        private RelayCommand homeButton_Click;
+        public RelayCommand HomeButton_Click
+        {
+            get
+            {
+                if (homeButton_Click == null)
+                    homeButton_Click = new RelayCommand(() => HomeSel());
+                return homeButton_Click;
+
+            }
+            set { homeButton_Click = value; }
+        }
+        private RelayCommand confButton_Click;
+        public RelayCommand ConfButton_Click
+        {
+            get
+            {
+                if (confButton_Click == null)
+                    confButton_Click = new RelayCommand(() => ConfSel());
+                return confButton_Click;
+
+            }
+            set { confButton_Click = value; }
+        }
+
+        //private string _pageName;
+        public string PageName
+        {
+            get {//return _pageName;
+                return pageModel.PageName;
+            }
+            set { //_pageName = value;
+                pageModel.PageName = value;
+                OnPropertyChanged(); 
+            }
+        }
+        //private Brush _home_B;
+        public Brush Home_B
+        {
+            get {
+                //return _home_B;
+                return pageModel.Home_B;
+            }
+            set {//_home_B = value;
+                pageModel.Home_B = value;
+                OnPropertyChanged();
+            }
+        }
+
+        //private Brush _conf_B;
+        public Brush Conf_B
+        {
+            get {
+                //return _conf_B;
+                return pageModel.Conf_B;
+                }
+            set { 
+                //_conf_B = value;
+                pageModel.Conf_B = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string GetIP()
         {
             string localIP = string.Empty;
@@ -210,7 +308,7 @@ namespace cpu_net.ViewModel
                             _mode = 1;
                             Info("自动识别为CPU环境");
                         }
-                        else if(_ip[0] == "10" & _ip[1] == "4")
+                        else if (_ip[0] == "10" & _ip[1] == "4")
                         {
                             _mode = 1;
                             Info("自动识别为CPU环境");
@@ -224,21 +322,24 @@ namespace cpu_net.ViewModel
                 }
                 string Login_url;
                 string _res = "";
-                switch (_mode) {
+                switch (_mode)
+                {
                     case 0:
                         Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
                     $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
                         break;
                     case 1:
                         string local_ip;
-                        try{
+                        try
+                        {
                             string remote_url = "http://192.168.199.21/drcom/chkstatus?callback=dr1002";
                             string res_remo = HttpRequestHelper.HttpGetRequest(remote_url).Replace("dr1002", "").Replace(" ", "");
                             var res = res_remo.Substring(1, res_remo.Length - 2);
                             var _obj = JsonSerializer.Deserialize<V46ip>(res)!;
                             local_ip = _obj.ss5;
                         }
-                        catch(Exception e){
+                        catch (Exception e)
+                        {
                             //Info(e.Message);
                             local_ip = _IP;
                         }
@@ -268,9 +369,9 @@ namespace cpu_net.ViewModel
                     }
 
                     //System.Diagnostics.Debug.WriteLine(_res);
-                    var res = _res.Substring(1,_res.Length-2);
+                    var res = _res.Substring(1, _res.Length - 2);
                     //System.Diagnostics.Debug.WriteLine(res);
-                    if(res == null)
+                    if (res == null)
                     {
                         Info("网络错误");
                         return;
@@ -339,7 +440,7 @@ namespace cpu_net.ViewModel
                     Info("登录失败");
                     Info(e.Message);
                 }
-                catch(JsonException e)
+                catch (JsonException)
                 {
                     Info("JSON解析失败");
                     Info(_res);
@@ -347,14 +448,24 @@ namespace cpu_net.ViewModel
             }
             else
             {
-                Info("No Config Found");
-                MessageBox.Show("请在设置中添加账号信息", "提示");
+                Info("No Config Found");                
+                var result = MessageBox.Show("请在设置中添加账号信息", "提示");
+                /*
+                if (result == MessageBoxResult.OK)
+                {
+                    ConfSel();
+                }
+                
+                Info(pageModel.PageName);
+                */
             }
-            
+
         }
+
         private void NoticeOnline()
         {
             System.Diagnostics.Process.Start("explorer.exe", "https://lic.cpu.edu.cn/ee/c6/c7550a192198/page.htm");
+            Info(pageModel.PageName);
         }
         private void BindOnline()
         {
@@ -362,7 +473,7 @@ namespace cpu_net.ViewModel
         }
     }
 
-    public class LoginInfoViewModel: BindableBase
+    public class LoginInfoViewModel : BindableBase
     {
         public LoginInfoViewModel(SettingModel settingModel)
         {
@@ -381,6 +492,7 @@ namespace cpu_net.ViewModel
     public class UserViewModel : ViewModelBase
     {
         SettingModel settingData = new SettingModel();
+        AutoStart autoStart = new AutoStart();
         public UserViewModel()
         {
             WeakReferenceMessenger.Default.Register<string>(this, Receive);
@@ -411,31 +523,34 @@ namespace cpu_net.ViewModel
             set { password = value; OnPropertyChanged(); }
         }
 
-        private Boolean isAutoRun;
-        public Boolean IsAutoRun
+        private bool isAutoRun;
+        public bool IsAutoRun
         {
             get { return isAutoRun; }
-            set { isAutoRun = value; settingData.IsAutoRun = isAutoRun;
-                autoStart.SetAutoStart(isAutoRun);
-                OnPropertyChanged(); }
+            set
+            {
+                isAutoRun = value; settingData.IsAutoRun = isAutoRun;
+                autoStart.SetMeAutoStart(isAutoRun);
+                OnPropertyChanged();
+            }
         }
 
-        private Boolean isAutoLogin;
-        public Boolean IsAutoLogin
+        private bool isAutoLogin;
+        public bool IsAutoLogin
         {
             get { return isAutoLogin; }
             set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; OnPropertyChanged(); }
         }
 
-        private Boolean isAutoMin;
-        public Boolean IsAutoMin
+        private bool isAutoMin;
+        public bool IsAutoMin
         {
             get { return isAutoMin; }
             set { isAutoMin = value; settingData.IsAutoMin = isAutoMin; OnPropertyChanged(); }
         }
 
-        private Boolean isSetLogin;
-        public Boolean IsSetLogin
+        private bool isSetLogin;
+        public bool IsSetLogin
         {
             get { return isSetLogin; }
             set { isSetLogin = value; settingData.IsSetLogin = isSetLogin; OnPropertyChanged(); }
@@ -447,7 +562,7 @@ namespace cpu_net.ViewModel
             get { return mode; }
             set { mode = value; settingData.Mode = mode; OnPropertyChanged(); }
         }
-        
+
         private RelayCommand pppButton_Click;
         public RelayCommand PppButton_Click
         {
@@ -536,11 +651,11 @@ namespace cpu_net.ViewModel
         }
         CarriersModel carrier = new CarriersModel();
         string Text;
-        public void Receive(object recipient,string message)
+        public void Receive(object recipient, string message)
         {
             Text = message;
         }
-        
+
         private void SaveAccount()
         {
             int Key = 0;
@@ -564,10 +679,11 @@ namespace cpu_net.ViewModel
                     carrier = "telecom";
                     break;
             }
-            if (String.IsNullOrEmpty(Code) | String.IsNullOrEmpty(Password))
+            if (string.IsNullOrEmpty(Code) | string.IsNullOrEmpty(Password))
             {
-                MessageBox.Show("请输入学号和密码","Attention");
-            }else if (Key == 0 & Mode != 1)
+                MessageBox.Show("请输入学号和密码", "Attention");
+            }
+            else if (Key == 0 & Mode != 1)
             {
                 MessageBox.Show("请选择运营商", "Attention");
             }
@@ -578,12 +694,33 @@ namespace cpu_net.ViewModel
                 settingData.Carrier = carrier;
                 settingData.Key = Key;
                 settingData.Save();
-                MessageBox.Show("保存成功", "Info");
+                var result = MessageBox.Show("保存成功", "Info");
+                /*
+                if (result == MessageBoxResult.OK)
+                {
+                    HomeSelected();
+                }*/
             }
         }
+
+        /*
+        MainViewModel mainViewModel = new MainViewModel();
+        
+        private void HomeSelected()
+        {
+            Action invokeAction = new Action(HomeSelected);
+            if (!System.Windows.Application.Current.Dispatcher.CheckAccess())
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
+            }
+            else
+            {
+                mainViewModel.HomeSel();
+            }
+        }*/
     }
 
-    public class CarrierViewModel : ViewModelBase 
+    public class CarrierViewModel : ViewModelBase
     {
         SettingModel settingData = new SettingModel();
         public CarrierViewModel()
@@ -613,9 +750,12 @@ namespace cpu_net.ViewModel
         public CarriersModel ComboxItem
         {
             get { return comboxItem; }
-            set { comboxItem = value; 
+            set
+            {
+                comboxItem = value;
                 WeakReferenceMessenger.Default.Send<string>(comboxItem.Text);
-                OnPropertyChanged(); }
+                OnPropertyChanged();
+            }
         }
 
         private ObservableCollection<CarriersModel> comboxList;
