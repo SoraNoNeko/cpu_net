@@ -322,10 +322,10 @@ namespace cpu_net.ViewModel
                                             default:
                                                 Info($"Error Message: {obj.msga}");
                                                 break;
-                                            case "ldap auth error":
+                                            case "ldapautherror":
                                                 Info("密码错误");
                                                 break;
-                                            case "unbind isp uid":
+                                            case "unbindispuid":
                                                 Info("未绑定宽带账号");
                                                 break;
                                         }
