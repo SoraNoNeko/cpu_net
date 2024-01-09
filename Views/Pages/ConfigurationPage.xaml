@@ -88,6 +88,7 @@
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
+                        <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="40"/>
                     </Grid.RowDefinitions>
@@ -104,9 +105,14 @@
                             <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
                         </StackPanel>
                     </Grid>
-                    <Button Grid.Row="1" Grid.Column="0" Content="保存" Name="SaveButton" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40" Click="SaveButton_Click"/>
-                    <Button Grid.Row="1" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
-                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" Block.TextAlignment="Center">
+                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >在宿舍登录模式请选择宽带，在宿舍外请选择CPU</TextBox>
+                        <LineBreak/>
+                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >连接出现问题可尝试自动</TextBox>
+                    </TextBlock>
+                    <Button Grid.Row="2" Grid.Column="0" Content="保存" Name="SaveButton" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40" Click="SaveButton_Click"/>
+                    <Button Grid.Row="2" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
+                    <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
                                Block.TextAlignment="Center" VerticalAlignment="Center">
                         <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >
                             Developed BY 二阶堂真红

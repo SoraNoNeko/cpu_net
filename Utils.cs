@@ -13,8 +13,25 @@ namespace cpu_net
             {
                 Directory.CreateDirectory("ErrorLog");
             }
+            string Month,Day;
             var now = DateTime.Now;
-            var logpath = @"ErrorLog\" + now.Year + "" + now.Month + "" + now.Day + ".log";
+            if (now.Month < 10)
+            {
+                Month = "0" + now.Month.ToString();
+            }
+            else
+            {
+                Month = now.Month.ToString();
+            }
+            if (now.Day < 10)
+            {
+                Day = "0" + now.Day.ToString();
+            }
+            else
+            {
+                Day = now.Day.ToString();
+            }
+            var logpath = @"ErrorLog\" + now.Year + "" + Month + "" + Day + ".log";
             var log = "\r\n----------------------" + DateTime.Now + " --------------------------\r\n"
                       + ex.Message
                       + "\r\n"

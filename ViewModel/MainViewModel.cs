@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Messaging;
 using cpu_net.Model;
 using cpu_net.ViewModel.Base;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
@@ -16,6 +17,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms;
 
 namespace cpu_net.ViewModel
 {
@@ -58,9 +60,22 @@ namespace cpu_net.ViewModel
         private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
         public static void TextLog(string log)
         {
+            string Month;
             var now = DateTime.Now;
-            var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
-            var _log = $"{DateTime.Now.ToString("HH:mm")}  " + log + "\r\n";
+            if(now.Month < 10)
+            {
+                Month = "0" + now.Month.ToString();
+            }
+            else
+            {
+                Month = now.Month.ToString();
+            }
+            if (!Directory.Exists("Log"))
+            {
+                Directory.CreateDirectory("Log");
+            }
+            var logpath = @"Log\" + now.Year + "" + Month + ".log";
+            var _log = $"{DateTime.Now.ToString("M-d HH:mm")}  " + log + "\r\n";
             try
             {
                 //设置读写锁为写入模式独占资源，其他写入请求需要等待本次写入结束之后才能继续写入
@@ -76,9 +91,18 @@ namespace cpu_net.ViewModel
 
         public static string ReadLog()
         {
+            string Month;
             var now = DateTime.Now;
+            if (now.Month < 10)
+            {
+                Month = "0" + now.Month.ToString();
+            }
+            else
+            {
+                Month = now.Month.ToString();
+            }
             string fLog = "";
-            var logpath = @"" + now.Year + "" + now.Month + "" + now.Day + ".log";
+            var logpath = @"Log\" + now.Year + "" + Month + "" + ".log";
             if (File.Exists(logpath))
             {
 
@@ -151,13 +175,20 @@ namespace cpu_net.ViewModel
         public string GetIP()
         {
             string localIP = string.Empty;
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            try
             {
-                socket.Connect("8.8.8.8", 65530);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                localIP = endPoint.Address.ToString();
+                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                {
+                    socket.Connect("8.8.8.8", 65530);
+                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                    localIP = endPoint.Address.ToString();
+                }
+                Info($"当前IP为{localIP}");
             }
-            Info($"当前IP为{localIP}");
+            catch
+            {
+                Info("IP获取失败");
+            }
             return localIP;
         }
 
@@ -186,11 +217,16 @@ namespace cpu_net.ViewModel
         {
             public string msg { get; set; }
         }
-        public void LoginOnline()
+        public int LoginOnline()
         {
             if (settingData.PathExist())
             {
                 var _IP = GetIP();
+                if (String.IsNullOrEmpty(_IP))
+                {
+                    Info("请检查网络连接后重试");
+                    return 0;
+                }
                 settingData = settingData.Read();
                 int _mode = 0;
                 switch (settingData.Mode)
@@ -274,7 +310,7 @@ namespace cpu_net.ViewModel
                     if (res == null)
                     {
                         Info("网络错误");
-                        return;
+                        return 0;
                     }
 
                     switch (_mode)
@@ -287,7 +323,7 @@ namespace cpu_net.ViewModel
                                 {
                                     case "1":
                                         Info("登录成功");
-                                        break;
+                                        return 1;
                                     case "0":
                                         var obj = JsonSerializer.Deserialize<ret>(res)!;
                                         switch (obj.ret_code)
@@ -296,10 +332,10 @@ namespace cpu_net.ViewModel
                                                 Info("登录失败");
                                                 var msg = JsonSerializer.Deserialize<lRes>(res)!;
                                                 Info($"Error Message: {msg.msg}");
-                                                break;
+                                                return 0;
                                             case 2:
                                                 Info("本设备已在线，请勿重复登录");
-                                                break;
+                                                return 0;
                                         }
                                         break;
                                 }
@@ -313,7 +349,7 @@ namespace cpu_net.ViewModel
                                 {
                                     case 1:
                                         Info("登录成功");
-                                        break;
+                                        return 1;
                                     case 0:
                                         Info("登录失败");
                                         var obj = JsonSerializer.Deserialize<LRes>(res)!;
@@ -321,34 +357,41 @@ namespace cpu_net.ViewModel
                                         {
                                             default:
                                                 Info($"Error Message: {obj.msga}");
-                                                break;
+                                                return 0;
                                             case "ldapautherror":
                                                 Info("密码错误");
-                                                break;
+                                                return 0;
                                             case "unbindispuid":
                                                 Info("未绑定宽带账号");
-                                                break;
+                                                return 0;
                                         }
-                                        break;
                                 }
                             }
-                            break;
+                            return 0;
                     }
                 }
                 catch (HttpRequestException e)
                 {
                     Info("登录失败");
                     Info(e.Message);
+                    return 0;
                 }
                 catch (JsonException)
                 {
                     Info("JSON解析失败");
-                    Info(_res);
+                    return 0;
+                    //Info(_res);
+                }
+                catch(Exception e){
+                    Info("网络连接失败，请检查网络设置，如果使用路由器，请确认是否使用自动获取ip");
+                    Info(e.Message);
+                    return 0;
                 }
             }
             else
             {
                 Info("No Config Found");
+                return 0;
                 //var result = MessageBox.Show("请在设置中添加账号信息", "提示");
                 /*
                 if (result == MessageBoxResult.OK)
@@ -359,7 +402,7 @@ namespace cpu_net.ViewModel
                 Info(pageModel.PageName);
                 */
             }
-
+            return 0;
         }
 
         private void NoticeOnline()
@@ -437,7 +480,7 @@ namespace cpu_net.ViewModel
         public bool IsAutoLogin
         {
             get { return isAutoLogin; }
-            set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; Debug.WriteLine(Password) ; OnPropertyChanged(); }
+            set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; OnPropertyChanged(); }
         }
 
         private bool isAutoMin;

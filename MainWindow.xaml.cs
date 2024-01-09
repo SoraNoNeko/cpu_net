@@ -1,7 +1,10 @@
 ﻿using cpu_net.Model;
 using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System;
+using System.Diagnostics;
+using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -27,16 +30,16 @@ namespace cpu_net
             configurationPage.ParentWindow = this;
             ChangePage("home");
             //Debug.WriteLine("action1");
-            TimerMain();
+            MainViewModel mainViewModel = new MainViewModel();
+            TimerMain(mainViewModel);
             //Debug.WriteLine("action2");
             SettingModel settingData = new SettingModel();
-            MainViewModel mainViewModel = new MainViewModel();
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
                 if (settingData.IsAutoLogin)
                 {
-                    mainViewModel.LoginOnline();
+                    loginToast(mainViewModel);
                 }
                 if (settingData.IsAutoMin)
                 {
@@ -48,20 +51,21 @@ namespace cpu_net
 
         private Timer timer;
 
-        public void TimerMain()
+        public void TimerMain(MainViewModel mainViewModel)
         {
             //Debug.WriteLine("action3");
             timer = new Timer(LoginCheck, "", 21600000, 21600000);
-            //timer = new Timer(LoginCheck, "", 3000, 21600000);
+            //timer = new Timer(LoginCheck, mainViewModel, 3000, 21600000);
             //timer.Dispose();
         }
         private void LoginCheck(object? ob)
         {
+            MainViewModel mainViewModel = (MainViewModel)ob;
             timer.Dispose();
-            loginCheck();
+            loginCheck(mainViewModel);
             //Debug.WriteLine("tick1");
             //Test();
-            TimerMain();
+            TimerMain(mainViewModel);
         }
         /*
         private void Test()
@@ -101,7 +105,7 @@ namespace cpu_net
                     break;
             }
         }
-        private void loginCheck()
+        private void loginCheck(MainViewModel mainViewModel)
         {
             SettingModel settingData = new SettingModel();
             //Debug.WriteLine("action4");
@@ -114,18 +118,34 @@ namespace cpu_net
                     //MainViewModel mainViewModel = new MainViewModel();
                     //mainViewModel.LoginOnline();
 
-                    Action invokeAction = new Action(loginCheck);
+                    Action<MainViewModel> invokeAction = new Action<MainViewModel>(loginCheck);
                     if (!this.Dispatcher.CheckAccess())
                     {
-                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction);
+                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction, mainViewModel);
                     }
                     else
                     {
-                        homePage.LoginButton.Command.Execute(null);
+                        loginToast(mainViewModel);
+                        //homePage.LoginButton.Command.Execute(null);
                     }
 
                 }
             }
+        }
+        public void loginToast(MainViewModel mainViewModel)
+        {
+            int a = mainViewModel.LoginOnline();
+            //Debug.WriteLine("a="+a);
+            //Debug.WriteLine(this.Visibility);
+            if (a == 0 & this.Visibility == Visibility.Collapsed)
+            {
+                Debug.WriteLine("toasttest");
+                new ToastContentBuilder()
+                    .AddText("登录失败")
+                    .AddText("请检查网络设置")
+                    .Show();
+            }
+            ChangePage("home");
         }
 
         public void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

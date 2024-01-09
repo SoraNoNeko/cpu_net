@@ -38,6 +38,7 @@ namespace cpu_net.Views.Pages
         {
             InitializeComponent();
             textNotice.Text = noticeText;
+            sv1.ScrollToEnd();
         }
 
         private void LoginButton_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -73,6 +74,11 @@ namespace cpu_net.Views.Pages
                 this.parentWindow.Conf_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 //this.NavigationService.Source = new Uri("/Views/Pages/ConfigurationPage.xaml", UriKind.Relative);
             }
+        }
+
+        private void textLog_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            sv1.ScrollToEnd();
         }
     }
 }
