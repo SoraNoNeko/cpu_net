@@ -30,8 +30,7 @@ namespace cpu_net
             configurationPage.ParentWindow = this;
             ChangePage("home");
             //Debug.WriteLine("action1");
-            MainViewModel mainViewModel = new MainViewModel();
-            TimerMain(mainViewModel);
+            TimerMain();
             //Debug.WriteLine("action2");
             SettingModel settingData = new SettingModel();
             if (settingData.PathExist())
@@ -39,7 +38,7 @@ namespace cpu_net
                 settingData = settingData.Read();
                 if (settingData.IsAutoLogin)
                 {
-                    loginToast(mainViewModel);
+                    loginToast();
                 }
                 if (settingData.IsAutoMin)
                 {
@@ -51,7 +50,7 @@ namespace cpu_net
 
         private Timer timer;
 
-        public void TimerMain(MainViewModel mainViewModel)
+        public void TimerMain()
         {
             //Debug.WriteLine("action3");
             timer = new Timer(LoginCheck, "", 21600000, 21600000);
@@ -60,12 +59,11 @@ namespace cpu_net
         }
         private void LoginCheck(object? ob)
         {
-            MainViewModel mainViewModel = (MainViewModel)ob;
             timer.Dispose();
-            loginCheck(mainViewModel);
+            loginCheck();
             //Debug.WriteLine("tick1");
             //Test();
-            TimerMain(mainViewModel);
+            TimerMain();
         }
         /*
         private void Test()
@@ -105,7 +103,7 @@ namespace cpu_net
                     break;
             }
         }
-        private void loginCheck(MainViewModel mainViewModel)
+        private void loginCheck()
         {
             SettingModel settingData = new SettingModel();
             //Debug.WriteLine("action4");
@@ -118,22 +116,23 @@ namespace cpu_net
                     //MainViewModel mainViewModel = new MainViewModel();
                     //mainViewModel.LoginOnline();
 
-                    Action<MainViewModel> invokeAction = new Action<MainViewModel>(loginCheck);
+                    Action invokeAction = new Action(loginCheck);
                     if (!this.Dispatcher.CheckAccess())
                     {
-                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction, mainViewModel);
+                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction);
                     }
                     else
                     {
-                        loginToast(mainViewModel);
+                        loginToast();
                         //homePage.LoginButton.Command.Execute(null);
                     }
 
                 }
             }
         }
-        public void loginToast(MainViewModel mainViewModel)
+        public void loginToast()
         {
+            MainViewModel mainViewModel = new MainViewModel();
             int a = mainViewModel.LoginOnline();
             //Debug.WriteLine("a="+a);
             //Debug.WriteLine(this.Visibility);
