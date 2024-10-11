@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)communitytoolkit.mvvm\8.2.2\buildTransitive\netstandard2.1\CommunityToolkit.Mvvm.targets" Condition="Exists('$(NuGetPackageRoot)communitytoolkit.mvvm\8.2.2\buildTransitive\netstandard2.1\CommunityToolkit.Mvvm.targets')" />
+    <Import Project="$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets" Condition="Exists('$(NuGetPackageRoot)prism.events\9.0.537\buildTransitive\Prism.Events.targets')" />
+    <Import Project="$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)prism.container.abstractions\9.0.106\buildTransitive\Prism.Container.Abstractions.targets')" />
+    <Import Project="$(NuGetPackageRoot)prism.core\9.0.537\buildTransitive\Prism.Core.targets" Condition="Exists('$(NuGetPackageRoot)prism.core\9.0.537\buildTransitive\Prism.Core.targets')" />
+    <Import Project="$(NuGetPackageRoot)communitytoolkit.mvvm\8.3.2\buildTransitive\CommunityToolkit.Mvvm.targets" Condition="Exists('$(NuGetPackageRoot)communitytoolkit.mvvm\8.3.2\buildTransitive\CommunityToolkit.Mvvm.targets')" />
   </ImportGroup>
 </Project>

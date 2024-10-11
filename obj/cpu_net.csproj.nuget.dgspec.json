@@ -10,14 +10,14 @@
         "projectUniqueName": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
         "projectName": "cpu_net",
         "projectPath": "D:\\py\\cpu_net\\cpu_net\\cpu_net.csproj",
-        "packagesPath": "C:\\Users\\a1392\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\sora\\.nuget\\packages\\",
         "outputPath": "D:\\py\\cpu_net\\cpu_net\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Program Files\\VS Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\a1392\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\sora\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -38,6 +39,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -46,11 +52,11 @@
           "dependencies": {
             "CommunityToolkit.Mvvm": {
               "target": "Package",
-              "version": "[8.2.2, )"
+              "version": "[8.3.2, )"
             },
             "Hardcodet.NotifyIcon.Wpf": {
               "target": "Package",
-              "version": "[1.1.0, )"
+              "version": "[2.0.0, )"
             },
             "Microsoft.Toolkit.Uwp.Notifications": {
               "target": "Package",
@@ -58,11 +64,11 @@
             },
             "Prism.Core": {
               "target": "Package",
-              "version": "[8.1.97, )"
+              "version": "[9.0.537, )"
             },
             "System.Runtime.Caching": {
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[8.0.1, )"
             }
           },
           "imports": [
@@ -79,7 +85,7 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.Windows.SDK.NET.Ref",
-              "version": "[10.0.17763.29, 10.0.17763.29]"
+              "version": "[10.0.17763.31, 10.0.17763.31]"
             }
           ],
           "frameworkReferences": {
@@ -93,7 +99,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.403\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }
