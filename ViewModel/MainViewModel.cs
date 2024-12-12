@@ -18,6 +18,8 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using static System.Net.WebRequestMethods;
+using File = System.IO.File;
 
 namespace cpu_net.ViewModel
 {
@@ -258,14 +260,30 @@ namespace cpu_net.ViewModel
                 }
                 string Login_url;
                 string _res = "";
+                string local_ip;
+                string url_head = "http://172.17.253.3:801/eportal/portal/login?";
+                string url_head_ssl = "https://172.17.253.3:802/eportal/portal/login?";
                 switch (_mode)
                 {
                     case 0:
-                        Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
-                    $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
+                        
+                        try
+                        {
+                            string remote_url = "http://172.17.253.3/drcom/chkstatus?callback=dr1002";
+                            string res_remo = HttpRequestHelper.HttpGetRequest(remote_url).Replace("dr1002", "").Replace(" ", "");
+                            var res = res_remo.Substring(1, res_remo.Length - 2);
+                            var _obj = JsonSerializer.Deserialize<V46ip>(res)!;
+                            local_ip = _obj.ss5;
+                        }
+                        catch (Exception e)
+                        {
+                            //Info(e.Message);
+                            local_ip = _IP;
+                        }
+                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settingData.Username}%40{settingData.Carrier}" +
+                    $"&user_password={settingData.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&terminal_type=1&lang=zh-cn&v=9745&lang=zh";
                         break;
                     case 1:
-                        string local_ip;
                         try
                         {
                             string remote_url = "http://192.168.199.21/drcom/chkstatus?callback=dr1002";
@@ -284,28 +302,35 @@ namespace cpu_net.ViewModel
                             $"&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=3.3.3&v=1954";
                         break;
                     default:
-                        Login_url = $"http://172.17.253.3/drcom/login?callback=dr1003&DDDDD={settingData.Username}%40{settingData.Carrier}" +
-                   $"&upass={settingData.Password}&0MKKey=123456&R1=0&R2=&R3=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.1.3&v=7011&lang=zh";
+                        try
+                        {
+                            string remote_url = "http://172.17.253.3/drcom/chkstatus?callback=dr1002";
+                            string res_remo = HttpRequestHelper.HttpGetRequest(remote_url).Replace("dr1002", "").Replace(" ", "");
+                            var res = res_remo.Substring(1, res_remo.Length - 2);
+                            var _obj = JsonSerializer.Deserialize<V46ip>(res)!;
+                            local_ip = _obj.ss5;
+                        }
+                        catch (Exception e)
+                        {
+                            //Info(e.Message);
+                            local_ip = _IP;
+                        }
+                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settingData.Username}%40{settingData.Carrier}" +
+                    $"&user_password={settingData.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&lang=zh-cn&v=9745&lang=zh";
                         break;
                 }
                 try
                 {
                     //var _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace(" ","");
-                    switch (_mode)
-                    {
-                        case 0:
-                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
-                            break;
-                        case 1:
-                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1004", "").Replace(" ", "");
-                            break;
-                        default:
-                            _res = HttpRequestHelper.HttpGetRequest(Login_url).Replace("dr1003", "").Replace(" ", "");
-                            break;
-                    }
+                    //Info(Login_url);
 
+                    _res = HttpRequestHelper.HttpGetRequest(Login_url);
+                    //Info(_res);
+                    _res = _res.Replace("dr1004", "").Replace(" ", "");
+                    //Info(_res);
                     //System.Diagnostics.Debug.WriteLine(_res);
-                    var res = _res.Substring(1, _res.Length - 2);
+                    var res = _res.Substring(1, _res.Length - 3);
+                    //Info(res);
                     //System.Diagnostics.Debug.WriteLine(res);
                     if (res == null)
                     {
@@ -313,62 +338,30 @@ namespace cpu_net.ViewModel
                         return 0;
                     }
 
-                    switch (_mode)
+                    var _Obj = JsonSerializer.Deserialize<_LRes>(res)!;
+                    if (_Obj != null)
                     {
-                        case 1:
-                            var _Obj = JsonSerializer.Deserialize<_lRes>(res)!;
-                            if (_Obj != null)
-                            {
-                                switch (_Obj.result)
+                        switch (_Obj.result)
+                        {
+                            case 1:
+                                Info("登录成功");
+                                return 1;
+                            case 0:
+                                var obj = JsonSerializer.Deserialize<ret>(res)!;
+                                switch (obj.ret_code)
                                 {
-                                    case "1":
-                                        Info("登录成功");
-                                        return 1;
-                                    case "0":
-                                        var obj = JsonSerializer.Deserialize<ret>(res)!;
-                                        switch (obj.ret_code)
-                                        {
-                                            default:
-                                                Info("登录失败");
-                                                var msg = JsonSerializer.Deserialize<lRes>(res)!;
-                                                Info($"Error Message: {msg.msg}");
-                                                return 0;
-                                            case 2:
-                                                Info("本设备已在线，请勿重复登录");
-                                                return 0;
-                                        }
-                                        break;
-                                }
-                            }
-                            break;
-                        case 0:
-                            var _obj = JsonSerializer.Deserialize<_LRes>(res)!;
-                            if (_obj != null)
-                            {
-                                switch (_obj.result)
-                                {
-                                    case 1:
-                                        Info("登录成功");
-                                        return 1;
-                                    case 0:
+                                    default:
                                         Info("登录失败");
-                                        var obj = JsonSerializer.Deserialize<LRes>(res)!;
-                                        switch (obj.msga)
-                                        {
-                                            default:
-                                                Info($"Error Message: {obj.msga}");
-                                                return 0;
-                                            case "ldapautherror":
-                                                Info("密码错误");
-                                                return 0;
-                                            case "unbindispuid":
-                                                Info("未绑定宽带账号");
-                                                return 0;
-                                        }
+                                        var msg = JsonSerializer.Deserialize<lRes>(res)!;
+                                        Info($"Error Message: {msg.msg}");
+                                        return 0;
+                                    case 2:
+                                        Info("本设备已在线，请勿重复登录");
+                                        return 0;
                                 }
-                            }
-                            return 0;
+                        }
                     }
+
                 }
                 catch (HttpRequestException e)
                 {
@@ -383,8 +376,8 @@ namespace cpu_net.ViewModel
                     //Info(_res);
                 }
                 catch(Exception e){
+                    Info(e.TargetSite+e.Message+e.StackTrace);
                     Info("网络连接失败，请检查网络设置，如果使用路由器，请确认是否使用自动获取ip");
-                    Info(e.Message);
                     return 0;
                 }
             }
@@ -782,9 +775,10 @@ namespace cpu_net.ViewModel
                 strGetResponse = GetHttpResponse(getResponse, "GET");
                 return strGetResponse;
             }
-            catch
+            catch (Exception ex) 
             {
                 return string.Empty;
+                // return ex.TargetSite+ex.Message+ex.StackTrace;
             }
         }
 
