@@ -5,14 +5,12 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:cpu_net.Views.Pages"
       xmlns:vm="clr-namespace:cpu_net.ViewModel"
+      xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
       mc:Ignorable="d" 
+      xmlns:prism="http://prismlibrary.com/"
+      prism:ViewModelLocator.AutoWireViewModel="True"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="ConfigurationPage">
-    <Page.Resources>
-        <vm:CarrierViewModel x:Key="carrierVM"/>
-        <vm:UserViewModel x:Key="userVM"/>
-        <vm:MainViewModel x:Key="mVM"/>
-    </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -53,14 +51,14 @@
                                 <RowDefinition Height="30"/>
                             </Grid.RowDefinitions>
                             <TextBox Grid.Row="0" Grid.Column="0" Text="学  号:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Name="code" Width="250" FontSize="20" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=Code, Source={StaticResource userVM}}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="code" Width="250" FontSize="20" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=Code}"/>
                             <TextBox Grid.Row="1" Grid.Column="0" Text="密  码:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
                             <PasswordBox Grid.Row="1" Grid.Column="1" Name="secret" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False" 
                                          vm:LoginPasswordBoxHelper.IsPasswordBindingEnable="True"
-                                         vm:LoginPasswordBoxHelper.Password="{Binding Path=Password, Source={StaticResource userVM}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                         vm:LoginPasswordBoxHelper.Password="{Binding Path=Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBox Grid.Row="2" Grid.Column="0" Text="运营商:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1" Name="carrier" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False"
-                                      ItemsSource="{Binding Path=ComboxList,Mode=TwoWay,Source={StaticResource carrierVM}}" SelectedItem="{Binding Path=ComboxItem,Mode=TwoWay,Source={StaticResource carrierVM}}" DisplayMemberPath="Text" SelectedValuePath="Key">
+                            <ComboBox Grid.Row="2" Grid.Column="1" Name="carrier" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False" ItemsSource="{Binding CarrierList, Mode=TwoWay}"
+                                      SelectedValue="{Binding SelectedCarrier, Mode=TwoWay}" DisplayMemberPath="Text" SelectedValuePath="Key">
                                 <!--ComboBoxItem Name="cmcc">移动</ComboBoxItem-->
                                 <!--ComboBoxItem Name="unicom">联通</ComboBoxItem-->
                                 <!--ComboBoxItem Name="telecom">电信</ComboBoxItem-->
@@ -73,10 +71,10 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="1" Margin="10" VerticalAlignment="Center">
-                                <CheckBox Name="AutoRun" IsChecked="{Binding Path=IsAutoRun,Source={StaticResource userVM}}">开机启动</CheckBox>
-                                <CheckBox Name="AutoLogin" IsChecked="{Binding Path=IsAutoLogin,Source={StaticResource userVM}}">自动登录</CheckBox>
-                                <CheckBox Name="AutoMin" IsChecked="{Binding Path=IsAutoMin,Source={StaticResource userVM}}">自动最小化</CheckBox>
-                                <CheckBox Name="SetLogin" IsChecked="{Binding Path=IsSetLogin,Source={StaticResource userVM}}">定时检测</CheckBox>
+                                <CheckBox Name="AutoRun" IsChecked="{Binding Path=IsAutoRun}">开机启动</CheckBox>
+                                <CheckBox Name="AutoLogin" IsChecked="{Binding Path=IsAutoLogin}">自动登录</CheckBox>
+                                <CheckBox Name="AutoMin" IsChecked="{Binding Path=IsAutoMin}">自动最小化</CheckBox>
+                                <CheckBox Name="SetLogin" IsChecked="{Binding Path=IsSetLogin}">定时检测</CheckBox>
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -101,9 +99,9 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
                             <Label HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15">登录模式:</Label>
-                            <RadioButton Name="ppp" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=PppButton_Click,Source={StaticResource userVM}}">宽带</RadioButton>
-                            <RadioButton Name="cpu" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=CpuButton_Click,Source={StaticResource userVM}}">CPU</RadioButton>
-                            <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click,Source={StaticResource userVM}}">自动</RadioButton>
+                            <RadioButton Name="ppp" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=PppButton_Click}">宽带</RadioButton>
+                            <RadioButton Name="cpu" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=CpuButton_Click}">CPU</RadioButton>
+                            <RadioButton Name="auto" GroupName="Mode" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{Binding Path=AutoButton_Click}">自动</RadioButton>
                         </StackPanel>
                         <Grid Grid.Column="2">
                             <Grid.ColumnDefinitions>
@@ -112,7 +110,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Row="0" Grid.Column="0" Text="定时时长:" Background="White" BorderThickness="0" FontSize="15" IsReadOnly="True" VerticalAlignment="Center" />
-                            <TextBox Grid.Row="0" Grid.Column="1" Name="loginTime" Width="75" Height="25" FontSize="15" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=LoginTime, Source={StaticResource userVM}}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="loginTime" Width="75" Height="25" FontSize="15" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=LoginTime}"/>
                             <TextBox Grid.Row="0" Grid.Column="2" Text="秒" Background="White" BorderThickness="0" FontSize="15" IsReadOnly="True" VerticalAlignment="Top" Margin="0,5,0,0" />
                         </Grid>
                     </Grid>

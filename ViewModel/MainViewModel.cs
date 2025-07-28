@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using cpu_net.Model;
+using cpu_net.Services;
 using cpu_net.ViewModel.Base;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Prism.Mvvm;
@@ -25,49 +26,25 @@ namespace cpu_net.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        SettingModel settingData = new SettingModel();
-        public MainViewModel()
-        {
-        }
+        public LoginInfoViewModel LoginInfo { get; }
+        public UserViewModel UserInfo { get; }
+        public CarrierViewModel CarrierInfo { get; }
+        private readonly ISettingService _settingService;
 
-        /*
-        private Timer timer;
-
-        public void TimerMain()
+        public MainViewModel(UserViewModel userViewModel, CarrierViewModel carrierViewModel, LoginInfoViewModel loginInfoViewModel ,ISettingService settingService)
         {
-            //Debug.WriteLine("action3");
-            //timer = new Timer(LoginCheck, "", 21600000, 21600000);
-            timer = new Timer(LoginCheck, "", 3000, 21600000);
-            //timer.Dispose();
+            LoginInfo = loginInfoViewModel;
+            UserInfo = userViewModel;
+            CarrierInfo = carrierViewModel;
+            _settingService = settingService;
         }
-
-        private void LoginCheck(object? ob)
-        {
-            timer.Dispose();
-            //Debug.WriteLine("action4");
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                if (settingData.IsSetLogin)
-                {
-                    Debug.WriteLine("count");
-                    LoginOnline();
-                    //homePage.LoginButton.Command.Execute(null);
-                }
-            }
-            TimerMain();
-        }
-        */
 
         private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
         public void TextLog(string log, string LogName)
         {
             var now = DateTime.Now;
-            if (settingData.PathExist())
-            {
-                settingData.Read();
-            }
-            if (!settingData.TestMode & LogName == "RecordLog")
+            var test_mode = _settingService.Settings.TestMode;
+            if (!test_mode & LogName == "RecordLog")
             {
                 return;
             }
@@ -228,7 +205,7 @@ namespace cpu_net.ViewModel
         }
         public int LoginOnline()
         {
-            if (settingData.PathExist())
+            if (_settingService.Settings.PathExist())
             {
                 var _IP = GetIP();
                 if (String.IsNullOrEmpty(_IP))
@@ -236,15 +213,15 @@ namespace cpu_net.ViewModel
                     Info("请检查网络连接后重试");
                     return 0;
                 }
-                settingData = settingData.Read();
+                var settings = _settingService.Settings;
                 int _mode = 0;
-                switch (settingData.Mode)
+                switch (settings.Mode)
                 {
                     case 0:
-                        _mode = settingData.Mode;
+                        _mode = settings.Mode;
                         break;
                     case 1:
-                        _mode = settingData.Mode;
+                        _mode = settings.Mode;
                         break;
                     case 2:
                         string[] _ip = _IP.Split('.');
@@ -283,8 +260,8 @@ namespace cpu_net.ViewModel
                             Record(e.Message);
                             local_ip = _IP;
                         }
-                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settingData.Username}%40{settingData.Carrier}" +
-                    $"&user_password={settingData.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&terminal_type=1&lang=zh-cn&v=9745&lang=zh";
+                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settings.Username}%40{settings.Carrier}" +
+                    $"&user_password={settings.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&terminal_type=1&lang=zh-cn&v=9745&lang=zh";
                         break;
                     case 1:
                         try
@@ -302,7 +279,7 @@ namespace cpu_net.ViewModel
                             local_ip = _IP;
                         }
                         //Info(local_ip);
-                        Login_url = $"http://192.168.199.21:801/eportal/?c=Portal&a=login&callback=dr1004&login_method=1&user_account=%2C0%2C{settingData.Username}&user_password={settingData.Password}" +
+                        Login_url = $"http://192.168.199.21:801/eportal/?c=Portal&a=login&callback=dr1004&login_method=1&user_account=%2C0%2C{settings.Username}&user_password={settings.Password}" +
                             $"&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=3.3.3&v=1954";
                         break;
                     default:
@@ -320,8 +297,8 @@ namespace cpu_net.ViewModel
                             Record(e.Message);
                             local_ip = _IP;
                         }
-                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settingData.Username}%40{settingData.Carrier}" +
-                    $"&user_password={settingData.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&lang=zh-cn&v=9745&lang=zh";
+                        Login_url = $"{url_head}callback=dr1004&login_method=1&user_account=%2C0%2C{settings.Username}%40{settings.Carrier}" +
+                    $"&user_password={settings.Password}&wlan_user_ip={local_ip}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&lang=zh-cn&v=9745&lang=zh";
                         break;
                 }
                 Record(Login_url);
@@ -395,15 +372,7 @@ namespace cpu_net.ViewModel
             {
                 Info("No Config Found");
                 return 0;
-                //var result = MessageBox.Show("请在设置中添加账号信息", "提示");
-                /*
-                if (result == MessageBoxResult.OK)
-                {
-                    ConfSel();
-                }
-                
-                Info(pageModel.PageName);
-                */
+
             }
             return 0;
         }
@@ -416,356 +385,6 @@ namespace cpu_net.ViewModel
         {
             System.Diagnostics.Process.Start("explorer.exe", "http://192.168.199.70:8080/Self/Dashboard");
         }
-    }
-
-    public class LoginInfoViewModel : BindableBase
-    {
-        public LoginInfoViewModel(SettingModel settingModel)
-        {
-            _SettingModel = settingModel;
-            SettingModel.PropertyChanged += (object sender, PropertyChangedEventArgs e) => settingModel.Save();
-        }
-        private SettingModel _SettingModel;
-
-        public SettingModel SettingModel
-        {
-            get { return _SettingModel; }
-            set { SetProperty(ref _SettingModel, value); }
-        }
-    }
-
-    public class UserViewModel : ViewModelBase
-    {
-        SettingModel settingData = new SettingModel();
-        AutoStart autoStart = new AutoStart();
-        public UserViewModel()
-        {
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                Code = settingData.Username;
-                Password = settingData.Password;
-                IsAutoRun = settingData.IsAutoRun;
-                IsAutoLogin = settingData.IsAutoLogin;
-                IsAutoMin = settingData.IsAutoMin;
-                IsSetLogin = settingData.IsSetLogin;
-                Mode = settingData.Mode;
-            }
-        }
-
-        private string code;
-        public string Code
-        {
-            get { return code; }
-            set { code = value; OnPropertyChanged(); }
-        }
-
-        private string password;
-        public string Password
-        {
-            get { return password; }
-            set { password = value; OnPropertyChanged(); }
-        }
-
-        private bool isAutoRun;
-        public bool IsAutoRun
-        {
-            get { return isAutoRun; }
-            set
-            {
-                isAutoRun = value; settingData.IsAutoRun = isAutoRun;
-                autoStart.SetMeAutoStart(isAutoRun);
-                OnPropertyChanged();
-            }
-        }
-
-        private bool isAutoLogin;
-        public bool IsAutoLogin
-        {
-            get { return isAutoLogin; }
-            set { isAutoLogin = value; settingData.IsAutoLogin = isAutoLogin; OnPropertyChanged(); }
-        }
-
-        private bool isAutoMin;
-        public bool IsAutoMin
-        {
-            get { return isAutoMin; }
-            set { isAutoMin = value; settingData.IsAutoMin = isAutoMin; OnPropertyChanged(); }
-        }
-
-        private bool isSetLogin;
-        public bool IsSetLogin
-        {
-            get { return isSetLogin; }
-            set { isSetLogin = value; settingData.IsSetLogin = isSetLogin; OnPropertyChanged(); }
-        }
-
-        private int mode;
-        public int Mode
-        {
-            get { return mode; }
-            set { mode = value; settingData.Mode = mode; OnPropertyChanged(); }
-        }
-
-        private RelayCommand pppButton_Click;
-        public RelayCommand PppButton_Click
-        {
-            get
-            {
-                if (pppButton_Click == null)
-                    pppButton_Click = new RelayCommand(() => PppMode());
-                return pppButton_Click;
-
-            }
-            set { pppButton_Click = value; }
-        }
-
-        private RelayCommand cpuButton_Click;
-        public RelayCommand CpuButton_Click
-        {
-            get
-            {
-                if (cpuButton_Click == null)
-                    cpuButton_Click = new RelayCommand(() => CpuMode());
-                return cpuButton_Click;
-
-            }
-            set { cpuButton_Click = value; }
-        }
-
-        private RelayCommand autoButton_Click;
-        public RelayCommand AutoButton_Click
-        {
-            get
-            {
-                if (autoButton_Click == null)
-                    autoButton_Click = new RelayCommand(() => AutoMode());
-                return autoButton_Click;
-
-            }
-            set { autoButton_Click = value; }
-        }
-
-        private void PppMode()
-        {
-            Mode = 0;
-        }
-
-        private void CpuMode()
-        {
-            Mode = 1;
-        }
-
-        private void AutoMode()
-        {
-            Mode = 2;
-        }
-        /*
-        private Boolean pppChecked;
-        public Boolean PppChecked
-        {
-            get { return Mode == 0?true:false; }
-            set { pppChecked = value; cpuChecked = false; autoChecked = false; Mode = 0; settingData.Mode = Mode; OnPropertyChanged(); }
-        }
-
-        private Boolean cpuChecked;
-        public Boolean CpuChecked
-        {
-            get { return Mode == 1 ? true : false; }
-            set { cpuChecked = value; autoChecked = false; pppChecked = false; Mode = 1; settingData.Mode = Mode; OnPropertyChanged(); }
-        }
-
-        private Boolean autoChecked;
-        public Boolean AutoChecked
-        {
-            get { return Mode == 2 ? true : false; }
-            set { autoChecked = value; pppChecked = false; cpuChecked = false; Mode = 2; settingData.Mode = Mode; OnPropertyChanged(); }
-        }
-        */
-        /*
-        private RelayCommand saveButton_Click;
-        public RelayCommand SaveButton_Click
-        {
-            get
-            {
-                if (saveButton_Click == null)
-                    saveButton_Click = new RelayCommand(() => SaveAccount());
-                return saveButton_Click;
-            }
-            set { saveButton_Click = value; }
-        }
-        CarriersModel carrier = new CarriersModel();
-        string Text;
-        public void Receive(object recipient, string message)
-        {
-            Text = message;
-        }
-
-        private void SaveAccount()
-        {
-            int Key = 0;
-            string carrier = "";
-            switch (Text)
-            {
-                case "请选择运营商":
-                    Key = 0;
-                    carrier = "";
-                    break;
-                case "移动":
-                    Key = 1;
-                    carrier = "cmcc";
-                    break;
-                case "联通":
-                    Key = 2;
-                    carrier = "unicom";
-                    break;
-                case "电信":
-                    Key = 3;
-                    carrier = "telecom";
-                    break;
-            }
-            if (string.IsNullOrEmpty(Code) | string.IsNullOrEmpty(Password))
-            {
-                //MessageBox.Show("请输入学号和密码", "Attention");
-            }
-            else if (Key == 0 & Mode != 1)
-            {
-                //MessageBox.Show("请选择运营商", "Attention");
-            }
-            else
-            {
-                settingData.Username = Code;
-                settingData.Password = Password;
-                Debug.WriteLine(Password);
-                settingData.Carrier = carrier;
-                settingData.Key = Key;
-                settingData.Save();
-        */
-                //var result = MessageBox.Show("保存成功", "Info");
-                /*
-                if (result == MessageBoxResult.OK)
-                {
-                    HomeSelected();
-                }
-            }
-        }*/
-
-        /*
-        MainViewModel mainViewModel = new MainViewModel();
-        
-        private void HomeSelected()
-        {
-            Action invokeAction = new Action(HomeSelected);
-            if (!System.Windows.Application.Current.Dispatcher.CheckAccess())
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
-            }
-            else
-            {
-                mainViewModel.HomeSel();
-            }
-        }*/
-    }
-
-    public class CarrierViewModel : ViewModelBase
-    {
-        SettingModel settingData = new SettingModel();
-        public CarrierViewModel()
-        {
-            ComboxList = new ObservableCollection<CarriersModel>() {
-          new CarriersModel() { Key = 0,Text = "请选择运营商" },
-          new CarriersModel() { Key = 1,Text = "移动" },
-          new CarriersModel() { Key = 2,Text = "联通" },
-          new CarriersModel() { Key = 3,Text = "电信" },
-        };
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                ComboxItem = ComboxList[settingData.Key];
-            }
-            else
-            {
-                ComboxItem = ComboxList[0];
-            }
-
-        }
-
-        private CarriersModel comboxItem;
-        /// <summary>
-        /// 下拉框选中信息
-        /// </summary>
-        public CarriersModel ComboxItem
-        {
-            get { return comboxItem; }
-            set
-            {
-                comboxItem = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private ObservableCollection<CarriersModel> comboxList;
-        /// <summary>
-        /// 下拉框列表
-        /// </summary>
-        public ObservableCollection<CarriersModel> ComboxList
-        {
-            get { return comboxList; }
-            set { comboxList = value; OnPropertyChanged(); }
-        }
-    }
-
-    //绑定PasswordBox
-    public static class LoginPasswordBoxHelper
-    {
-        public static string GetPassword(DependencyObject obj)
-        {
-            return (string)obj.GetValue(PasswordProperty);
-        }
-
-        public static void SetPassword(DependencyObject obj, string value)
-        {
-            obj.SetValue(PasswordProperty, value);
-        }
-
-        public static readonly DependencyProperty PasswordProperty =
-            DependencyProperty.RegisterAttached("Password", typeof(string), typeof(LoginPasswordBoxHelper), new PropertyMetadata(""));
-        public static bool GetIsPasswordBindingEnable(DependencyObject obj)
-        {
-            return (bool)obj.GetValue(IsPasswordBindingEnableProperty);
-        }
-
-        public static void SetIsPasswordBindingEnable(DependencyObject obj, bool value)
-        {
-            obj.SetValue(IsPasswordBindingEnableProperty, value);
-        }
-
-        public static readonly DependencyProperty IsPasswordBindingEnableProperty =
-            DependencyProperty.RegisterAttached("IsPasswordBindingEnable", typeof(bool), typeof(LoginPasswordBoxHelper),
-                                                new FrameworkPropertyMetadata(OnIsPasswordBindingEnabledChanged));
-
-        private static void OnIsPasswordBindingEnabledChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
-        {
-            var passwordBox = obj as PasswordBox;
-            if (passwordBox != null)
-            {
-                passwordBox.PasswordChanged -= PasswordBoxPasswordChanged;
-                if ((bool)e.NewValue)
-                {
-                    passwordBox.PasswordChanged += PasswordBoxPasswordChanged;
-                }
-            }
-        }
-
-        static void PasswordBoxPasswordChanged(object sender, RoutedEventArgs e)
-        {
-            var passwordBox = (PasswordBox)sender;
-            if (!String.Equals(GetPassword(passwordBox), passwordBox.Password))
-            {
-                SetPassword(passwordBox, passwordBox.Password);
-            }
-        }
-
     }
 
     public static class HttpRequestHelper

@@ -1,5 +1,7 @@
 ﻿using cpu_net.Model;
+using cpu_net.Services;
 using cpu_net.ViewModel;
+using Prism.Mvvm;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -7,236 +9,176 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace cpu_net.Views.Pages
 {
-    /// <summary>
-    /// ConfigurationPage.xaml 的交互逻辑
-    /// </summary>
     public partial class ConfigurationPage : Page
     {
-        BrushConverter brushConverter = new BrushConverter();
-        Brush darkblue;
-        Brush white;
-        SettingModel settingData = new SettingModel();
+        private readonly ISettingService _settingService;
+        private BrushConverter _brushConverter = new BrushConverter();
+        private Brush _darkblue;
+        private Brush _white;
 
-        MainWindow parentWindow;
+        private MainWindow _parentWindow;
         public MainWindow ParentWindow
         {
-            get { return parentWindow; }
-            set { parentWindow = value; }
+            get => _parentWindow;
+            set => _parentWindow = value;
         }
 
-        public ConfigurationPage()
+        // 通过依赖注入获取设置服务
+        public ConfigurationPage(MainViewModel mVM, ISettingService settingService)
         {
             InitializeComponent();
-            
-            if (!String.IsNullOrEmpty(code.Text))
+            DataContext = mVM;
+            _settingService = settingService;
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            // 使用设置服务加载配置
+            var settings = _settingService.Settings;
+
+            if (_settingService.Settings.PathExist())
             {
-                secret.Password = settingData.Password;
-            }
-            
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                code.Text = settingData.Username;
-                secret.Password = settingData.Password;
-                switch (settingData.Mode)
+                code.Text = settings.Username;
+                secret.Password = settings.Password;
+                loginTime.Text = settings.LoginTime.ToString();
+                AutoRun.IsChecked = settings.IsAutoRun;
+                AutoLogin.IsChecked = settings.IsAutoLogin;
+                AutoMin.IsChecked = settings.IsAutoMin;
+                SetLogin.IsChecked = settings.IsSetLogin;
+
+                // 设置运营商选择
+                switch (settings.Carrier)
                 {
-                    case 0:
-                        ppp.IsChecked = true; break;
-                    case 1:
-                        cpu.IsChecked = true; break;
-                    case 2:
-                        auto.IsChecked = true; break;
-                    default:
-                        ppp.IsChecked = true; break;
+                    case "cmcc": carrier.SelectedIndex = 1; break;
+                    case "unicom": carrier.SelectedIndex = 2; break;
+                    case "telecom": carrier.SelectedIndex = 3; break;
+                    default: carrier.SelectedIndex = 0; break;
                 }
-                loginTime.Text = settingData.LoginTime.ToString();
+
+                // 设置连接模式
+                switch (settings.Mode)
+                {
+                    case 0: ppp.IsChecked = true; break;
+                    case 1: cpu.IsChecked = true; break;
+                    case 2: auto.IsChecked = true; break;
+                    default: ppp.IsChecked = true; break;
+                }
             }
             else
             {
+                // 默认设置
                 ppp.IsChecked = true;
                 loginTime.Text = "6";
-            }
-        }
-
-        private void Code_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            Regex re = new Regex("[^0-9.-]+");
-            e.Handled = re.IsMatch(e.Text);
-        }
-
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                code.Text = settingData.Username;
-                secret.Password = settingData.Password;
-                loginTime.Text = settingData.LoginTime.ToString();
-                AutoRun.IsChecked = settingData.IsAutoRun;
-                AutoLogin.IsChecked = settingData.IsAutoLogin;
-                AutoMin.IsChecked = settingData.IsAutoMin;
-                SetLogin.IsChecked = settingData.IsSetLogin;
-                switch (settingData.Carrier)
-                {
-                    case "cmcc":
-                        carrier.SelectedIndex = 1;
-                        break;
-                    case "unicom":
-                        carrier.SelectedIndex = 2;
-                        break;
-                    case "telecom":
-                        carrier.SelectedIndex = 3;
-                        break;
-                    case "":
-                        carrier.SelectedIndex = 0;
-                        break;
-                }
-                switch (settingData.Mode)
-                {
-                    case 0:
-                        ppp.IsChecked = true;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = false;
-                        break;
-                    case 1:
-                        ppp.IsChecked = false;
-                        cpu.IsChecked = true;
-                        auto.IsChecked = false;
-                        break;
-                    case 2:
-                        ppp.IsChecked = false;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = true;
-                        break;
-                    default:
-                        ppp.IsChecked = true;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = false;
-                        break;
-                }
-            }
-            else
-            {
-                code.Text = String.Empty;
-                secret.Password = String.Empty;
                 carrier.SelectedIndex = 0;
                 AutoRun.IsChecked = false;
                 AutoLogin.IsChecked = false;
                 AutoMin.IsChecked = false;
                 SetLogin.IsChecked = false;
-                ppp.IsChecked = true;
-                cpu.IsChecked = false;
-                auto.IsChecked = false;
-                loginTime.Text = "6";
             }
+        }
+
+        private void Code_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 限制只能输入数字
+            Regex re = new Regex("[^0-9]+");
+            e.Handled = re.IsMatch(e.Text);
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 取消时重新加载设置
+            LoadSettings();
         }
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
+            // 打开GitHub链接
+            try
+            {
+                System.Diagnostics.Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://github.com/SoraNoNeko/cpu_net",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"无法打开链接: {ex.Message}");
+            }
         }
+
         private void ToHome()
         {
-            //Debug.WriteLine("count");
-            //MainViewModel mainViewModel = new MainViewModel();
-            //mainViewModel.LoginOnline();
+            // 导航回首页
+            Dispatcher.Invoke(() =>
+            {
 
-            Action invokeAction = new Action(ToHome);
-            if (!this.Dispatcher.CheckAccess())
-            {
-                this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
-            }
-            else
-            {
-                this.parentWindow.Home_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                //this.NavigationService.Source = new Uri("/Views/Pages/HomePage.xaml", UriKind.Relative);
-            }
+                ParentWindow.ChangePage("home");
+
+            });
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            int mode = 0;
-            int Key = 0;
-            string Carrier = "";
+            // 验证输入
+            if (string.IsNullOrEmpty(code.Text) || string.IsNullOrEmpty(secret.Password))
+            {
+                MessageBox.Show("请输入学号和密码", "注意");
+                return;
+            }
+
+            if (carrier.SelectedIndex == 0 && !(cpu.IsChecked == true))
+            {
+                MessageBox.Show("请选择运营商", "注意");
+                return;
+            }
+
+            // 获取运营商信息
+            string carrierValue = "";
+            int keyValue = 0;
             switch (carrier.SelectedIndex)
             {
-                case 0:
-                    Key = 0;
-                    Carrier = "";
-                    break;
-                case 1:
-                    Key = 1;
-                    Carrier = "cmcc";
-                    break;
-                case 2:
-                    Key = 2;
-                    Carrier = "unicom";
-                    break;
-                case 3:
-                    Key = 3;
-                    Carrier = "telecom";
-                    break;
+                case 0: carrierValue = ""; keyValue = 0; break;
+                case 1: carrierValue = "cmcc"; keyValue = 1; break;
+                case 2: carrierValue = "unicom"; keyValue = 2; break;
+                case 3: carrierValue = "telecom"; keyValue = 3; break;
             }
-            if (string.IsNullOrEmpty(code.Text) | string.IsNullOrEmpty(secret.Password))
+
+            // 获取连接模式
+            int modeValue = 0;
+            if (ppp.IsChecked == true) modeValue = 0;
+            else if (cpu.IsChecked == true) modeValue = 1;
+            else if (auto.IsChecked == true) modeValue = 2;
+
+            // 验证登录时间
+            if (!int.TryParse(loginTime.Text, out int loginTimeValue) || loginTimeValue <= 0)
             {
-                MessageBox.Show("请输入学号和密码", "Attention");
+                MessageBox.Show("请输入有效的登录时间间隔（大于0的整数）", "注意");
+                return;
             }
-            else if (carrier.SelectedIndex == 0 & cpu.IsChecked == false)
-            {
-                MessageBox.Show("请选择运营商", "Attention");
-            }
-            else
-            {
-                if (!AutoRun.IsChecked.HasValue)
-                {
-                    AutoRun.IsChecked = false;
-                }
-                settingData.IsAutoRun = (bool)AutoRun.IsChecked;
-                if (!AutoLogin.IsChecked.HasValue)
-                {
-                    AutoLogin.IsChecked = false;
-                }
-                settingData.IsAutoLogin = (bool)AutoLogin.IsChecked;
-                if (!AutoMin.IsChecked.HasValue)
-                {
-                    AutoMin.IsChecked = false;
-                }
-                settingData.IsAutoMin = (bool)AutoMin.IsChecked;
-                if (!SetLogin.IsChecked.HasValue)
-                {
-                    SetLogin.IsChecked = false;
-                }
-                settingData.IsSetLogin = (bool)SetLogin.IsChecked;
-                switch (ppp.IsChecked, cpu.IsChecked, auto.IsChecked)
-                {
-                    case (true, false, false):
-                        mode = 0;
-                        break;
-                    case (false, true, false):
-                        mode = 1;
-                        break;
-                    case (false, false, true):
-                        mode = 2;
-                        break;
-                }
-                settingData.Mode = mode;
-                settingData.Username = code.Text;
-                settingData.Password = secret.Password;
-                settingData.Carrier = Carrier;
-                settingData.Key = Key;
-                settingData.LoginTime = int.Parse(loginTime.Text);
-                settingData.Save();
-                var result = MessageBox.Show("保存成功", "Info");
-                if (result == MessageBoxResult.OK)
-                {
-                    ToHome();
-                }
-            }
+
+            // 更新设置对象
+            var settings = _settingService.Settings;
+            settings.Username = code.Text;
+            settings.Password = secret.Password;
+            settings.Carrier = carrierValue;
+            settings.Key = keyValue;
+            settings.Mode = modeValue;
+            settings.LoginTime = loginTimeValue;
+            settings.IsAutoRun = AutoRun.IsChecked ?? false;
+            settings.IsAutoLogin = AutoLogin.IsChecked ?? false;
+            settings.IsAutoMin = AutoMin.IsChecked ?? false;
+            settings.IsSetLogin = SetLogin.IsChecked ?? false;
+
+            // 保存设置
+            _settingService.SaveSettings();
+
+            MessageBox.Show("保存成功", "信息");
+            ToHome();
         }
     }
 }

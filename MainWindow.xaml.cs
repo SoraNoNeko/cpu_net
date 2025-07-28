@@ -1,7 +1,9 @@
 ﻿using cpu_net.Model;
+using cpu_net.Services;
 using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
 using Microsoft.Toolkit.Uwp.Notifications;
+using Prism.Navigation.Regions;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -34,54 +36,59 @@ namespace cpu_net
             ES_DISPLAY_REQUIRED = 0x00000002,
             ES_SYSTEM_REQUIRED = 0x00000001
         }
-        BrushConverter brushConverter = new BrushConverter();
-        Brush darkblue;
-        Brush white;
-        HomePage homePage = new HomePage();
-        ConfigurationPage configurationPage = new ConfigurationPage();
-        private MainViewModel _vm = new MainViewModel();
-        public MainWindow()
+        private readonly ISettingService _settingService;
+        private readonly IRegionManager _regionManager;
+        private BrushConverter _brushConverter = new BrushConverter();
+        private Brush? _darkblue;
+        private Brush? _white;
+
+        public MainViewModel _vm { get; }
+        public MainWindow(MainViewModel viewModel, ISettingService settingService, IRegionManager regionManager)
         {
             InitializeComponent();
-            PreventSleep();
-            homePage.ParentWindow = this;
-            configurationPage.ParentWindow = this;
-            ChangePage("home");
-            //Debug.WriteLine("action1");
-            TimerMain();
-            //Debug.WriteLine("action2");
-            SettingModel settingData = new SettingModel();
-            if (settingData.PathExist())
+            // 注入依赖项
+            // _vm = viewModel;
+            // _settingService = settingService;
+            _vm = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+            _settingService = settingService ?? throw new ArgumentNullException(nameof(settingService));
+            _regionManager = regionManager;
+            DataContext = _vm;  // 设置数据上下文
+            if (_settingService.Settings == null)
             {
-                settingData = settingData.Read();
-                if (settingData.IsAutoLogin)
-                {
-                    loginToast();
-                }
-                if (settingData.IsAutoMin)
-                {
-                    this.Visibility = Visibility.Hidden;
-                }
+                _settingService.Initialize(); // 如果服务有初始化方法
+            }
+            PreventSleep();
+            InitializePages();
+            InitializeTimer();
+        }
+        protected override void OnContentRendered(EventArgs e)
+        {
+            base.OnContentRendered(e);
+            ChangePage("home");
+            // 使用局部变量避免重复访问
+            if (_settingService.Settings.IsAutoLogin)
+            {
+                loginToast();
+            }
+
+            if (_settingService.Settings.IsAutoMin)
+            {
+                this.Visibility = Visibility.Hidden;
             }
         }
-
-
-        private Timer timer;
-
-        public void TimerMain()
+        private void InitializePages()
         {
-            //Debug.WriteLine("action3");
-            SettingModel settingData = new SettingModel();
-            int loginTime = 1000;
-            //Debug.WriteLine("action4");
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                loginTime = settingData.LoginTime * 1000;
-            }
-            timer = new Timer(LoginCheck, "", loginTime, loginTime);
-            //timer = new Timer(LoginCheck, mainViewModel, 3000, 21600000);
-            //timer.Dispose();
+            // 初始导航
+            _regionManager.RequestNavigate("ContentRegion", "HomePage");
+            _regionManager.RequestNavigate("ContentRegion", "ConfigurationPage");
+            
+        }
+        private Timer? loginTimer;
+        private void InitializeTimer()
+        {
+            // 使用设置服务中的值初始化定时器
+            int loginTime = _settingService.Settings.LoginTime * 1000;
+            loginTimer = new Timer(LoginCheck, null, loginTime, loginTime);
         }
         public string GetIP()
         {
@@ -104,19 +111,19 @@ namespace cpu_net
         }
         private async void LoginCheck(object? ob)
         {
-            timer.Dispose(); // 销毁当前定时器
-            SettingModel settingData = new SettingModel();
-            string test_url = "8.8.8.8";
-            string test_code = string.Empty;
-            if (settingData.PathExist())
+            // timer.Dispose(); // 销毁当前定时器
+            // SettingModel settingData = new SettingModel();
+            var settings = _settingService.Settings;
+            bool isSetLogin = settings.IsSetLogin;
+            if (!isSetLogin)
             {
-                settingData = settingData.Read();
-                test_url = settingData.TestUrl;
-                test_code = settingData.TestCode;
+                return;
             }
+            string test_url = settings.TestUrl;
+            string test_code = settings.TestCode;
+            
             // 使用HttpClient检测网络连接状态
             bool networkAvailable = false;
-            string expectedContent = "Sora connect test"; // 预期的文件内容
             try
             {
                 /*   using (var ping = new System.Net.NetworkInformation.Ping())
@@ -185,15 +192,14 @@ namespace cpu_net
                     _vm.Record("请检查网络连接后重试");
                     return;
                 }
-                settingData = settingData.Read();
                 int _mode = 0;
-                switch (settingData.Mode)
+                switch (settings.Mode)
                 {
                     case 0:
-                        _mode = settingData.Mode;
+                        _mode = settings.Mode;
                         break;
                     case 1:
-                        _mode = settingData.Mode;
+                        _mode = settings.Mode;
                         break;
                     case 2:
                         string[] _ip = _IP.Split('.');
@@ -216,24 +222,7 @@ namespace cpu_net
                 
             }
 
-            TimerMain(); // 重新启动定时器
         }
-        /*
-        private void Test()
-        {
-            Action invokeAction = new Action(Test);
-            if (!this.Dispatcher.CheckAccess())
-            {
-                this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
-            }
-            else
-            {
-                PageFrame.Refresh();
-                Debug.WriteLine("tick2");
-                Debug.WriteLine(PageFrame.Source.ToString());
-            }
-        }
-        */
         private void PreventSleep()
         {
             // 阻止系统休眠和关闭显示器
@@ -249,68 +238,50 @@ namespace cpu_net
             // 恢复系统正常休眠
             SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
         }
-        private void ChangePage(string name)
+        public void ChangePage(string name)
         {
-            darkblue = (Brush)brushConverter.ConvertFrom("DarkBlue");
-            white = (Brush)brushConverter.ConvertFrom("White");
+            _darkblue = (Brush)_brushConverter.ConvertFrom("DarkBlue");
+            _white = (Brush)_brushConverter.ConvertFrom("White");
+
             switch (name)
             {
                 case "home":
-                    Home_Button.BorderBrush = darkblue;
-                    Conf_Button.BorderBrush = white;
-                    var home = new HomePage();
-                    home.ParentWindow = this;
-                    PageFrame.Content = home;
+                    Home_Button.BorderBrush = _darkblue;
+                    Conf_Button.BorderBrush = _white;
+                    _regionManager.RequestNavigate("ContentRegion", "HomePage");
                     break;
+
                 case "conf":
-                    Home_Button.BorderBrush = white;
-                    Conf_Button.BorderBrush = darkblue;
-                    var conf = new ConfigurationPage();
-                    conf.ParentWindow = this;
-                    PageFrame.Content = conf;
+                    Home_Button.BorderBrush = _white;
+                    Conf_Button.BorderBrush = _darkblue;
+                    _regionManager.RequestNavigate("ContentRegion", "ConfigurationPage");
                     break;
             }
         }
         private void loginCheck()
         {
-            SettingModel settingData = new SettingModel();
-            //Debug.WriteLine("action4");
-            if (settingData.PathExist())
+            // 使用设置服务检查配置
+            if (_settingService.Settings.IsSetLogin)
             {
-                settingData = settingData.Read();
-                if (settingData.IsSetLogin)
-                {
-                    //Debug.WriteLine("count");
-                    //MainViewModel mainViewModel = new MainViewModel();
-                    //mainViewModel.LoginOnline();
-
-                    Action invokeAction = new Action(loginCheck);
-                    if (this.Dispatcher.CheckAccess())
-                    {
-                        loginToast();
-                        //homePage.LoginButton.Command.Execute(null);
-                    }
-                    else
-                    {
-                        this.Dispatcher.BeginInvoke(DispatcherPriority.Send, invokeAction);
-                    }
-
-                }
+                Dispatcher.Invoke(() => {
+                    loginToast();
+                });
             }
         }
+
         public void loginToast()
         {
-            int a = _vm.LoginOnline();
-            //Debug.WriteLine("a="+a);
-            //Debug.WriteLine(this.Visibility);
-            if (a == 0 & this.Visibility == Visibility.Collapsed)
+            // 通过 ViewModel 执行登录
+            int result = _vm.LoginOnline();
+
+            if (result == 0 && this.Visibility == Visibility.Collapsed)
             {
-                // Debug.WriteLine("toasttest");
                 new ToastContentBuilder()
                     .AddText("登录失败")
                     .AddText("请检查网络设置")
                     .Show();
             }
+
             ChangePage("home");
         }
 
@@ -385,6 +356,7 @@ namespace cpu_net
         }
         protected override void OnClosed(EventArgs e)
         {
+            loginTimer?.Dispose();
             AllowSleep(); // 窗口关闭时恢复休眠
             base.OnClosed(e);
         }

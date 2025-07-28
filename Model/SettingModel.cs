@@ -1,9 +1,6 @@
 ﻿using Prism.Mvvm;
 using System;
 using System.IO;
-using YamlDotNet.Serialization.NamingConventions;
-using YamlDotNet.Serialization;
-using System.Reflection; // 用于 PropertyInfo
 
 namespace cpu_net.Model
 {
@@ -17,11 +14,11 @@ namespace cpu_net.Model
 
         //配置文件路径
         private readonly string _SettingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.yaml");
-        private string _Password;
-        private string _UserName;
-        private string _Carrier;
-        private int _Key;
-        private int _Mode = 0;
+        private string? _Password;
+        private string? _UserName;
+        private string? _Carrier;
+        private int? _Key;
+        private int? _Mode;
         private bool? _IsAutoRun;
         private bool? _IsAutoLogin;
         private bool? _IsAutoMin;
@@ -56,7 +53,7 @@ namespace cpu_net.Model
         /// </summary>
         public string Username
         {
-            get { return _UserName; }
+            get { return _UserName ?? ""; }
             set { SetProperty(ref _UserName, value); }
         }
 
@@ -65,7 +62,7 @@ namespace cpu_net.Model
         /// </summary>
         public string Password
         {
-            get { return _Password; }
+            get { return _Password ?? ""; }
             set
             {
                 SetProperty(ref _Password, value);
@@ -77,7 +74,7 @@ namespace cpu_net.Model
         /// </summary>
         public string Carrier
         {
-            get { return _Carrier; }
+            get { return _Carrier ?? ""; }
             set
             {
                 SetProperty(ref _Carrier, value);
@@ -86,7 +83,7 @@ namespace cpu_net.Model
 
         public int Key
         {
-            get { return _Key; }
+            get { return _Key ?? 0; }
             set
             {
                 SetProperty(ref _Key, value);
@@ -95,7 +92,7 @@ namespace cpu_net.Model
 
         public int Mode
         {
-            get { return _Mode; }
+            get { return _Mode ?? 0; }
             set
             {
                 SetProperty(ref _Mode, value);
@@ -180,7 +177,7 @@ namespace cpu_net.Model
             }
         }
 
-        public SettingModel Read()
+        /*public SettingModel Read()
         {
             // Check if the file exists before attempting to read it
             if (!File.Exists(_SettingDataPath))
@@ -238,7 +235,7 @@ namespace cpu_net.Model
 
             string yamlStr = serializer.Serialize(userSettingData);
             File.WriteAllText(_SettingDataPath, yamlStr);
-        }
+        }*/
     }
 }
 

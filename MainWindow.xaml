@@ -11,10 +11,8 @@
         Closing="Window_Closing"
         StateChanged="Window_StateChanged"
         Title="CPU网络连接" Height="450" Width="600" TextBlock.TextAlignment="Center"
-        MinHeight="450" MinWidth="600">
-    <Window.DataContext>
-        <vm:MainViewModel/>
-    </Window.DataContext>
+        MinHeight="450" MinWidth="600"
+        xmlns:prism="http://prismlibrary.com/">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -35,7 +33,10 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Frame x:Name="PageFrame" NavigationUIVisibility="Hidden"/>
         </Grid>
+        <Frame Grid.Row="1" 
+               x:Name="ContentFrame"
+               prism:RegionManager.RegionName="ContentRegion"
+               NavigationUIVisibility="Hidden" />
     </Grid>
 </Window>
