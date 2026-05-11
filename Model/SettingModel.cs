@@ -1,215 +1,138 @@
 ﻿using Prism.Mvvm;
 using System;
 using System.IO;
-using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
-using System.Reflection; // 用于 PropertyInfo
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace cpu_net.Model
 {
     public class SettingModel : BindableBase
     {
-        string DefaultTestUrl = "http://www.msftconnecttest.com/connecttest.txt";
-        string DefaultTestCode = "Microsoft Connect Test";
-        public SettingModel()
-        {
-        }
+        private const string DefaultTestUrl = "http://www.msftconnecttest.com/connecttest.txt";
+        private const string DefaultTestCode = "Microsoft Connect Test";
 
-        //配置文件路径
-        private readonly string _SettingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.yaml");
-        private string _Password;
-        private string _UserName;
-        private string _Carrier;
-        private int _Key;
-        private int _Mode = 0;
-        private bool? _IsAutoRun;
-        private bool? _IsAutoLogin;
-        private bool? _IsAutoMin;
-        private bool? _IsSetLogin;
-        private int? _LoginTime;
-        private bool? _TestMode;
-        private string? _TestUrl;
-        private string? _TestCode;
-        ///private string _ServerAddress;
+        private readonly string _settingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.yaml");
 
-        //SettingDataPath exist
-        public bool PathExist()
-        {
-            if (File.Exists(_SettingDataPath))
-            {
-                return true;
-            }
-            else return false;
-        }
+        private string _password;
+        private string _userName;
+        private string _carrier;
+        private int _key;
+        private int _mode;
+        private bool? _isAutoRun;
+        private bool? _isAutoLogin;
+        private bool? _isAutoMin;
+        private bool? _isSetLogin;
+        private int? _loginTime;
+        private bool? _testMode;
+        private string? _testUrl;
+        private string? _testCode;
 
-        /// <summary>
-        /// 服务器API地址
-        /// </summary>
-        ///public string ServerAddress
-        ///{
-        ///    get { return _ServerAddress; }
-        ///    set { SetProperty(ref _ServerAddress, value); }
-        ///}
+        public bool PathExist() => File.Exists(_settingDataPath);
 
-        /// <summary>
-        /// 默认登录用户名
-        /// </summary>
         public string Username
         {
-            get { return _UserName; }
-            set { SetProperty(ref _UserName, value); }
+            get => _userName;
+            set => SetProperty(ref _userName, value);
         }
 
-        /// <summary>
-        /// 默认密码
-        /// </summary>
         public string Password
         {
-            get { return _Password; }
-            set
-            {
-                SetProperty(ref _Password, value);
-            }
+            get => _password;
+            set => SetProperty(ref _password, value);
         }
 
-        /// <summary>
-        /// 运营商
-        /// </summary>
         public string Carrier
         {
-            get { return _Carrier; }
-            set
-            {
-                SetProperty(ref _Carrier, value);
-            }
+            get => _carrier;
+            set => SetProperty(ref _carrier, value);
         }
 
         public int Key
         {
-            get { return _Key; }
-            set
-            {
-                SetProperty(ref _Key, value);
-            }
+            get => _key;
+            set => SetProperty(ref _key, value);
         }
 
         public int Mode
         {
-            get { return _Mode; }
-            set
-            {
-                SetProperty(ref _Mode, value);
-            }
+            get => _mode;
+            set => SetProperty(ref _mode, value);
         }
-        /// <summary>
-        /// 是否自动登录
-        /// </summary>
+
         public bool IsAutoRun
         {
-            get { return _IsAutoRun ?? false; }
-            set
-            {
-                SetProperty(ref _IsAutoRun, value);
-            }
+            get => _isAutoRun ?? false;
+            set => SetProperty(ref _isAutoRun, value);
         }
+
         public bool IsAutoLogin
         {
-            get { return _IsAutoLogin ?? false; }
-            set
-            {
-                SetProperty(ref _IsAutoLogin, value);
-            }
+            get => _isAutoLogin ?? false;
+            set => SetProperty(ref _isAutoLogin, value);
         }
+
         public bool IsAutoMin
         {
-            get { return _IsAutoMin ?? false; }
-            set
-            {
-                SetProperty(ref _IsAutoMin, value);
-            }
+            get => _isAutoMin ?? false;
+            set => SetProperty(ref _isAutoMin, value);
         }
+
         public bool IsSetLogin
         {
-            get { return _IsSetLogin ?? false; }
-            set
-            {
-                SetProperty(ref _IsSetLogin, value);
-            }
+            get => _isSetLogin ?? false;
+            set => SetProperty(ref _isSetLogin, value);
         }
+
         public int LoginTime
         {
-            get {
-                return _LoginTime ?? 5; 
-            }
-            set
-            {
-                SetProperty(ref _LoginTime, value);
-            }
+            get => _loginTime ?? 5;
+            set => SetProperty(ref _loginTime, value);
         }
+
         public bool TestMode
         {
-            get
-            {
-                return _TestMode ?? false;
-            }
-            set
-            {
-                SetProperty(ref _TestMode, value);
-            }
+            get => _testMode ?? false;
+            set => SetProperty(ref _testMode, value);
         }
+
         public string TestUrl
         {
-            get
-            {
-                return _TestUrl ?? DefaultTestUrl;
-            }
-            set
-            {
-                SetProperty(ref _TestUrl, value);
-            }
+            get => _testUrl ?? DefaultTestUrl;
+            set => SetProperty(ref _testUrl, value);
         }
+
         public string TestCode
         {
-            get
-            {
-                return _TestCode ?? DefaultTestCode;
-            }
-            set
-            {
-                SetProperty(ref _TestCode, value);
-            }
+            get => _testCode ?? DefaultTestCode;
+            set => SetProperty(ref _testCode, value);
         }
 
         public SettingModel Read()
         {
-            // Check if the file exists before attempting to read it
-            if (!File.Exists(_SettingDataPath))
+            if (!File.Exists(_settingDataPath))
             {
-                // If the file doesn't exist, return a new default SettingModel instance
                 return new SettingModel();
             }
-            string yamlStr = File.ReadAllText(_SettingDataPath);
+
+            string yamlStr = File.ReadAllText(_settingDataPath);
             var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(PascalCaseNamingConvention.Instance) // 根据你的 YAML 文件命名约定选择，例如 PascalCaseNamingConvention 或 NullNamingConvention
+                .WithNamingConvention(PascalCaseNamingConvention.Instance)
                 .Build();
 
-            // 尝试反序列化，如果文件为空或格式错误，则返回新的 SettingModel 实例
             try
             {
                 return deserializer.Deserialize<SettingModel>(yamlStr);
             }
             catch (YamlDotNet.Core.YamlException)
             {
-                // 处理文件可能为空或无效 YAML 的情况
                 return new SettingModel();
             }
         }
 
         public void Save()
         {
-            SettingModel userSettingData = new SettingModel
+            var userSettingData = new SettingModel
             {
-                // ServerAddress = ServerAddress, // 如果你希望保存 ServerAddress，需要在这里取消注释并确保有对应的属性
                 Username = Username,
                 Carrier = Carrier,
                 Key = Key,
@@ -224,6 +147,8 @@ namespace cpu_net.Model
                 TestCode = TestCode,
                 TestUrl = TestUrl,
             };
+
+            // 若配置已存在，保留原有的测试模式相关配置（覆盖当前内存中的值）
             if (userSettingData.PathExist())
             {
                 SettingModel data = userSettingData.Read();
@@ -233,12 +158,11 @@ namespace cpu_net.Model
             }
 
             var serializer = new SerializerBuilder()
-                .WithNamingConvention(PascalCaseNamingConvention.Instance) // 保持命名约定一致
+                .WithNamingConvention(PascalCaseNamingConvention.Instance)
                 .Build();
 
             string yamlStr = serializer.Serialize(userSettingData);
-            File.WriteAllText(_SettingDataPath, yamlStr);
+            File.WriteAllText(_settingDataPath, yamlStr);
         }
     }
 }
-

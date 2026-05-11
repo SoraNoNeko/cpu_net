@@ -9,23 +9,23 @@ namespace cpu_net.ViewModel.Base
 
         public CommandBase(Action executeAction, Func<bool> canExcuteFunc = null)
         {
-            this.ExecuteAction = executeAction;
-            this.CanExecuteFunc = canExcuteFunc;
+            ExecuteAction = executeAction;
+            CanExecuteFunc = canExcuteFunc;
         }
 
         public CommandBase(Action<object> executeParaAction, Func<object, bool> canExecuteParaFunc = null)
         {
-            this.ExecuteParaAction = executeParaAction;
-            this.CanExecuteParaFunc = canExecuteParaFunc;
+            ExecuteParaAction = executeParaAction;
+            CanExecuteParaFunc = canExecuteParaFunc;
         }
 
         public bool CanExecute(object parameter = null)
         {
             if (parameter == null)
             {
-                return this.CanExecuteFunc == null ? true : CanExecuteFunc.Invoke();
+                return CanExecuteFunc == null || CanExecuteFunc.Invoke();
             }
-            return CanExecuteParaFunc == null ? true : CanExecuteParaFunc.Invoke(parameter);
+            return CanExecuteParaFunc == null || CanExecuteParaFunc.Invoke(parameter);
         }
 
         public void Execute(object parameter = null)
@@ -45,5 +45,4 @@ namespace cpu_net.ViewModel.Base
         public Action<object> ExecuteParaAction { get; set; }
         public Func<object, bool> CanExecuteParaFunc { get; set; }
     }
-
 }

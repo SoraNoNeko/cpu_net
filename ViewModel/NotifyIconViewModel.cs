@@ -6,67 +6,39 @@ namespace cpu_net.ViewModel
 {
     public class NotifyIconViewModel
     {
-        private WindowState windowState;
-        /// <summary>
-        /// 激活窗口
-        /// </summary>
-        public ICommand ShowWindowCommand
+        private WindowState _windowState;
+
+        public ICommand ShowWindowCommand => new DelegateCommand
         {
-            get
+            CommandAction = () =>
             {
-                return new DelegateCommand
-                {
-                    CommandAction = () =>
-                    {
-                        Application.Current.MainWindow.Visibility = Visibility.Visible;
-                        Application.Current.MainWindow.Show();
-                        Application.Current.MainWindow.WindowState = windowState;
-                        Application.Current.MainWindow.Activate();
-                    }
-                };
+                Application.Current.MainWindow.Visibility = Visibility.Visible;
+                Application.Current.MainWindow.Show();
+                Application.Current.MainWindow.WindowState = _windowState;
+                Application.Current.MainWindow.Activate();
             }
-        }
+        };
 
-        /// <summary>
-        /// 隐藏窗口
-        /// </summary>
-        public ICommand HideWindowCommand
+        public ICommand HideWindowCommand => new DelegateCommand
         {
-            get
+            CommandAction = () =>
             {
-                return new DelegateCommand
-                {
-                    CommandAction = () =>
-                    {
-                        windowState = Application.Current.MainWindow.WindowState;
-                        Application.Current.MainWindow.Visibility = Visibility.Hidden;
-                    }
-                };
+                _windowState = Application.Current.MainWindow.WindowState;
+                Application.Current.MainWindow.Visibility = Visibility.Hidden;
             }
-        }
+        };
 
-
-        /// <summary>
-        /// 关闭软件
-        /// </summary>
-        public ICommand ExitApplicationCommand
+        public ICommand ExitApplicationCommand => new DelegateCommand
         {
-            get
+            CommandAction = () =>
             {
-                return new DelegateCommand
-                {
-                    CommandAction = () =>
-                    {
-                        Application.Current.MainWindow.Visibility = Visibility.Visible;
-                        Application.Current.MainWindow.Show();
-                        Application.Current.MainWindow.WindowState = windowState;
-                        Application.Current.MainWindow.Activate();
-                        Application.Current.MainWindow.Close();
-                    }
-                };
+                Application.Current.MainWindow.Visibility = Visibility.Visible;
+                Application.Current.MainWindow.Show();
+                Application.Current.MainWindow.WindowState = _windowState;
+                Application.Current.MainWindow.Activate();
+                Application.Current.MainWindow.Close();
             }
-        }
-
+        };
 
         public class DelegateCommand : ICommand
         {

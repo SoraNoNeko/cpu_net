@@ -11,7 +11,6 @@
     <Page.Resources>
         <vm:CarrierViewModel x:Key="carrierVM"/>
         <vm:UserViewModel x:Key="userVM"/>
-        <vm:MainViewModel x:Key="mVM"/>
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -41,7 +40,7 @@
                             <ColumnDefinition Width="320"/>
                             <ColumnDefinition Width="2*" MinWidth="120"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Row="0" Grid.Column="1" Text="账户信息设置" Background="White" BorderThickness="0" FontSize="24" IsReadOnly="True"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="账户信息设置" FontSize="24" VerticalAlignment="Center"/>
                         <Grid Grid.Row="1" Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70"/>
@@ -52,19 +51,15 @@
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="30"/>
                             </Grid.RowDefinitions>
-                            <TextBox Grid.Row="0" Grid.Column="0" Text="学  号:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="学  号:" FontSize="20" VerticalAlignment="Center"/>
                             <TextBox Grid.Row="0" Grid.Column="1" Name="code" Width="250" FontSize="20" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=Code, Source={StaticResource userVM}}"/>
-                            <TextBox Grid.Row="1" Grid.Column="0" Text="密  码:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="密  码:" FontSize="20" VerticalAlignment="Center"/>
                             <PasswordBox Grid.Row="1" Grid.Column="1" Name="secret" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False" 
                                          vm:LoginPasswordBoxHelper.IsPasswordBindingEnable="True"
                                          vm:LoginPasswordBoxHelper.Password="{Binding Path=Password, Source={StaticResource userVM}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBox Grid.Row="2" Grid.Column="0" Text="运营商:" Background="White" BorderThickness="0" FontSize="20" IsReadOnly="True"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="运营商:" FontSize="20" VerticalAlignment="Center"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" Name="carrier" Width="250" FontSize="20" InputMethod.IsInputMethodEnabled="False"
-                                      ItemsSource="{Binding Path=ComboxList,Mode=TwoWay,Source={StaticResource carrierVM}}" SelectedItem="{Binding Path=ComboxItem,Mode=TwoWay,Source={StaticResource carrierVM}}" DisplayMemberPath="Text" SelectedValuePath="Key">
-                                <!--ComboBoxItem Name="cmcc">移动</ComboBoxItem-->
-                                <!--ComboBoxItem Name="unicom">联通</ComboBoxItem-->
-                                <!--ComboBoxItem Name="telecom">电信</ComboBoxItem-->
-                            </ComboBox>
+                                      ItemsSource="{Binding Path=ComboxList,Mode=TwoWay,Source={StaticResource carrierVM}}" SelectedItem="{Binding Path=ComboxItem,Mode=TwoWay,Source={StaticResource carrierVM}}" DisplayMemberPath="Text" SelectedValuePath="Key"/>
                         </Grid>
                         <Grid Grid.Column="2" Grid.RowSpan="2">
                             <Grid.ColumnDefinitions>
@@ -111,25 +106,23 @@
                                 <ColumnDefinition Width="75"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Grid.Row="0" Grid.Column="0" Text="定时时长:" Background="White" BorderThickness="0" FontSize="15" IsReadOnly="True" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="定时时长:" FontSize="15" VerticalAlignment="Center"/>
                             <TextBox Grid.Row="0" Grid.Column="1" Name="loginTime" Width="75" Height="25" FontSize="15" PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False" Text="{Binding Path=LoginTime, Source={StaticResource userVM}}"/>
-                            <TextBox Grid.Row="0" Grid.Column="2" Text="秒" Background="White" BorderThickness="0" FontSize="15" IsReadOnly="True" VerticalAlignment="Top" Margin="0,5,0,0" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="秒" FontSize="15" VerticalAlignment="Center"/>
                         </Grid>
                     </Grid>
-                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" Block.TextAlignment="Center">
-                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >在宿舍登录模式请选择宽带，在宿舍外请选择CPU</TextBox>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center">
+                        <Run FontSize="16">在宿舍登录模式请选择宽带，在宿舍外请选择CPU</Run>
                         <LineBreak/>
-                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >连接出现问题可尝试自动</TextBox>
+                        <Run FontSize="16">连接出现问题可尝试自动</Run>
                     </TextBlock>
                     <Button Grid.Row="2" Grid.Column="0" Content="保存" Name="SaveButton" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40" Click="SaveButton_Click"/>
                     <Button Grid.Row="2" Grid.Column="1" Content="取消" Name="CancelButton" Click="CancelButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" FontSize="18" Width="100" Height="40"/>
                     <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Background="White" FontSize="20" HorizontalAlignment="Center"
-                               Block.TextAlignment="Center" VerticalAlignment="Center">
-                        <TextBox Background="White" BorderThickness="0" FontSize="16" IsReadOnly="True" HorizontalAlignment="Center" >
-                            Developed BY 二阶堂真红
-                        </TextBox><LineBreak/>
-                            <Hyperlink 
-                            Click="Hyperlink_Click" FontSize="16">代码发布页</Hyperlink>
+                               TextAlignment="Center" VerticalAlignment="Center">
+                        <Run FontSize="16">Developed BY 二阶堂真红</Run>
+                        <LineBreak/>
+                        <Hyperlink Click="Hyperlink_Click" FontSize="16">代码发布页</Hyperlink>
                     </TextBlock>
                 </Grid>
             </Grid>

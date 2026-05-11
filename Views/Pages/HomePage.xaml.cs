@@ -1,5 +1,4 @@
 ﻿using cpu_net.Model;
-using cpu_net.ViewModel;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -12,12 +11,12 @@ namespace cpu_net.Views.Pages
     /// <summary>
     /// HomePage.xaml 的交互逻辑
     /// </summary>
-    /// 
     public partial class HomePage : Page
     {
-        SettingModel settingData = new SettingModel();
+        private readonly SettingModel _settingData = new SettingModel();
         private readonly HttpClient _httpClient;
-        readonly String DefaultNoticeText = @"欢迎使用本程序，
+
+        private readonly string _defaultNoticeText = @"欢迎使用本程序，
 本程序旨在帮助药大学生自动登录校园网，免受断网困扰
 本本答疑群：939789212
 使用本程序前，需要绑定运营商账号，
@@ -31,29 +30,25 @@ namespace cpu_net.Views.Pages
 需要电脑不关机并连宿舍网
 尝试使用CPU模式强制连接CPU时可能会卡住，是正常现象";
 
-        MainWindow parentWindow;
-        public MainWindow ParentWindow
-        {
-            get { return parentWindow; }
-            set { parentWindow = value; }
-        }
+        public MainWindow ParentWindow { get; set; }
 
         public HomePage()
         {
             InitializeComponent();
             this.Loaded += (s, e) =>
             {
-                if (parentWindow != null)
+                if (ParentWindow != null)
                 {
-                    this.DataContext = parentWindow.DataContext;
+                    this.DataContext = ParentWindow.DataContext;
                 }
             };
+
             _httpClient = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(5) // 设置超时时间
+                Timeout = TimeSpan.FromSeconds(5)
             };
 
-            Loaded += HomePage_Loaded; // 页面加载时获取公告
+            Loaded += HomePage_Loaded;
         }
 
         private async void HomePage_Loaded(object sender, RoutedEventArgs e)
@@ -63,13 +58,11 @@ namespace cpu_net.Views.Pages
 
         private async Task LoadNoticeText()
         {
-            // 先显示默认公告
-            textNotice.Text = DefaultNoticeText;
+            textNotice.Text = _defaultNoticeText;
             sv1.ScrollToEnd();
 
             try
             {
-                // 尝试从服务器获取最新公告
                 string noticeUrl = "http://10.3.4.106/notice.txt";
                 string noticeContent = await _httpClient.GetStringAsync(noticeUrl);
 
@@ -81,44 +74,33 @@ namespace cpu_net.Views.Pages
             }
             catch (Exception ex)
             {
-                // 记录错误但不中断用户体验
-                // 在实际应用中，可以记录到日志系统
                 Console.WriteLine($"加载公告失败: {ex.Message}");
-
-                // 可选：在UI上显示错误信息
-                // textNotice.Text = $"{DefaultNoticeText}\n\n[公告加载失败: {ex.Message}]";
             }
         }
 
-        private void LoginButton_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            if (settingData.PathExist())
+            if (_settingData.PathExist())
             {
                 return;
             }
-            else
+
+            var result = MessageBox.Show("请在设置中添加账号信息", "提示");
+            if (result == MessageBoxResult.OK)
             {
-                var result = MessageBox.Show("请在设置中添加账号信息", "提示");
-
-                if (result == MessageBoxResult.OK)
-                {
-                    ToConf();
-                }
-
+                ToConf();
             }
         }
+
         private void ToConf()
         {
-
-            Action invokeAction = new Action(ToConf);
             if (!this.Dispatcher.CheckAccess())
             {
-                this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
+                this.Dispatcher.Invoke(DispatcherPriority.Send, new Action(ToConf));
             }
             else
             {
-                this.parentWindow.Conf_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                //this.NavigationService.Source = new Uri("/Views/Pages/ConfigurationPage.xaml", UriKind.Relative);
+                this.ParentWindow.Conf_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
         }
 

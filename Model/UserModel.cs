@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
 
 namespace cpu_net.Model
 {
@@ -8,46 +7,49 @@ namespace cpu_net.Model
         private string _code;
         public string Code
         {
-            get { return _code; }
-            set { _code = value; OnPropertyChanged(nameof(Code)); }
+            get => _code;
+            set { _code = value; OnPropertyChanged(); }
         }
 
         private string _secret;
         public string Secret
         {
-            get { return _secret; }
-            set { _secret = value; OnPropertyChanged(nameof(Secret)); }
+            get => _secret;
+            set { _secret = value; OnPropertyChanged(); }
         }
 
-        private Boolean _isAutoRun;
-        public Boolean IsAutoRun
+        private bool _isAutoRun;
+        public bool IsAutoRun
         {
-            get { return _isAutoRun; }
+            get => _isAutoRun;
             set { _isAutoRun = value; OnPropertyChanged(); }
         }
 
-        private Boolean _isAutoLogin;
-        public Boolean IsAutoLogin
+        private bool _isAutoLogin;
+        public bool IsAutoLogin
         {
-            get { return _isAutoLogin; }
+            get => _isAutoLogin;
             set { _isAutoLogin = value; OnPropertyChanged(); }
         }
-        private Boolean _isAutoMin;
-        public Boolean IsAutoMin
+
+        private bool _isAutoMin;
+        public bool IsAutoMin
         {
-            get { return _isAutoMin; }
+            get => _isAutoMin;
             set { _isAutoMin = value; OnPropertyChanged(); }
         }
-        private Boolean _isSetLogin;
-        public Boolean IsSetLogin
+
+        private bool _isSetLogin;
+        public bool IsSetLogin
         {
-            get { return _isSetLogin; }
+            get => _isSetLogin;
             set { _isSetLogin = value; OnPropertyChanged(); }
         }
+
         private int _loginTime;
         public int LoginTime
         {
-            get { return _loginTime; }
+            get => _loginTime;
             set { _loginTime = value; OnPropertyChanged(); }
         }
     }

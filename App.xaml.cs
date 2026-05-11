@@ -1,10 +1,10 @@
 ﻿using cpu_net.Model;
+using cpu_net.Services;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
-using Windows.Foundation.Collections;
 
 namespace cpu_net
 {
@@ -14,7 +14,6 @@ namespace cpu_net
     public partial class App : Application
     {
         public static TaskbarIcon TaskbarIcon;
-        SettingModel settingData = new SettingModel();
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -114,8 +113,7 @@ namespace cpu_net
         {
             MessageBox.Show("出错了，请与开发人员联系：" + ex.Message);
             //记录日志
-            Utils.LogWrite(ex);
-
+            LoggingService.WriteErrorLog(ex);
         }
     }
 }

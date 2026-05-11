@@ -14,7 +14,7 @@
     <BaseOutputPath>D:\py\cpu_net\workingspace\bin</BaseOutputPath>
     <BaseIntermediateOutputPath>D:\py\cpu_net\workingspace\obj</BaseIntermediateOutputPath>
     <IsPublishable>True</IsPublishable>
-    <FileVersion>3.2.4</FileVersion>
+    <FileVersion>3.3.0</FileVersion>
     <IncludeSymbols>False</IncludeSymbols>
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>

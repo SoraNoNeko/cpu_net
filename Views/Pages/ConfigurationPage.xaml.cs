@@ -1,14 +1,11 @@
 ﻿using cpu_net.Model;
-using cpu_net.ViewModel;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace cpu_net.Views.Pages
 {
@@ -17,226 +14,140 @@ namespace cpu_net.Views.Pages
     /// </summary>
     public partial class ConfigurationPage : Page
     {
-        BrushConverter brushConverter = new BrushConverter();
-        Brush darkblue;
-        Brush white;
-        SettingModel settingData = new SettingModel();
+        private SettingModel _settingData = new SettingModel();
 
-        MainWindow parentWindow;
-        public MainWindow ParentWindow
-        {
-            get { return parentWindow; }
-            set { parentWindow = value; }
-        }
+        public MainWindow ParentWindow { get; set; }
 
         public ConfigurationPage()
         {
             InitializeComponent();
-            
-            if (!String.IsNullOrEmpty(code.Text))
-            {
-                secret.Password = settingData.Password;
-            }
-            
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                code.Text = settingData.Username;
-                secret.Password = settingData.Password;
-                switch (settingData.Mode)
-                {
-                    case 0:
-                        ppp.IsChecked = true; break;
-                    case 1:
-                        cpu.IsChecked = true; break;
-                    case 2:
-                        auto.IsChecked = true; break;
-                    default:
-                        ppp.IsChecked = true; break;
-                }
-                loginTime.Text = settingData.LoginTime.ToString();
-            }
-            else
-            {
-                ppp.IsChecked = true;
-                loginTime.Text = "6";
-            }
+            LoadSettingsToUi(new SettingModel(), isReset: true);
         }
 
         private void Code_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            Regex re = new Regex("[^0-9.-]+");
-            e.Handled = re.IsMatch(e.Text);
+            e.Handled = Regex.IsMatch(e.Text, "[^0-9.-]+");
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            if (settingData.PathExist())
-            {
-                settingData = settingData.Read();
-                code.Text = settingData.Username;
-                secret.Password = settingData.Password;
-                loginTime.Text = settingData.LoginTime.ToString();
-                AutoRun.IsChecked = settingData.IsAutoRun;
-                AutoLogin.IsChecked = settingData.IsAutoLogin;
-                AutoMin.IsChecked = settingData.IsAutoMin;
-                SetLogin.IsChecked = settingData.IsSetLogin;
-                switch (settingData.Carrier)
-                {
-                    case "cmcc":
-                        carrier.SelectedIndex = 1;
-                        break;
-                    case "unicom":
-                        carrier.SelectedIndex = 2;
-                        break;
-                    case "telecom":
-                        carrier.SelectedIndex = 3;
-                        break;
-                    case "":
-                        carrier.SelectedIndex = 0;
-                        break;
-                }
-                switch (settingData.Mode)
-                {
-                    case 0:
-                        ppp.IsChecked = true;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = false;
-                        break;
-                    case 1:
-                        ppp.IsChecked = false;
-                        cpu.IsChecked = true;
-                        auto.IsChecked = false;
-                        break;
-                    case 2:
-                        ppp.IsChecked = false;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = true;
-                        break;
-                    default:
-                        ppp.IsChecked = true;
-                        cpu.IsChecked = false;
-                        auto.IsChecked = false;
-                        break;
-                }
-            }
-            else
-            {
-                code.Text = String.Empty;
-                secret.Password = String.Empty;
-                carrier.SelectedIndex = 0;
-                AutoRun.IsChecked = false;
-                AutoLogin.IsChecked = false;
-                AutoMin.IsChecked = false;
-                SetLogin.IsChecked = false;
-                ppp.IsChecked = true;
-                cpu.IsChecked = false;
-                auto.IsChecked = false;
-                loginTime.Text = "6";
-            }
+            var settingData = new SettingModel();
+            LoadSettingsToUi(settingData, isReset: true);
         }
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
+            Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
         }
+
         private void ToHome()
         {
-            //Debug.WriteLine("count");
-            //MainViewModel mainViewModel = new MainViewModel();
-            //mainViewModel.LoginOnline();
-
-            Action invokeAction = new Action(ToHome);
             if (!this.Dispatcher.CheckAccess())
             {
-                this.Dispatcher.Invoke(DispatcherPriority.Send, invokeAction);
+                this.Dispatcher.Invoke(DispatcherPriority.Send, new Action(ToHome));
             }
             else
             {
-                this.parentWindow.Home_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                //this.NavigationService.Source = new Uri("/Views/Pages/HomePage.xaml", UriKind.Relative);
+                this.ParentWindow.Home_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            int mode = 0;
-            int Key = 0;
-            string Carrier = "";
-            switch (carrier.SelectedIndex)
-            {
-                case 0:
-                    Key = 0;
-                    Carrier = "";
-                    break;
-                case 1:
-                    Key = 1;
-                    Carrier = "cmcc";
-                    break;
-                case 2:
-                    Key = 2;
-                    Carrier = "unicom";
-                    break;
-                case 3:
-                    Key = 3;
-                    Carrier = "telecom";
-                    break;
-            }
-            if (string.IsNullOrEmpty(code.Text) | string.IsNullOrEmpty(secret.Password))
+            if (string.IsNullOrEmpty(code.Text) || string.IsNullOrEmpty(secret.Password))
             {
                 MessageBox.Show("请输入学号和密码", "Attention");
+                return;
             }
-            else if (carrier.SelectedIndex == 0 & cpu.IsChecked == false)
+
+            if (carrier.SelectedIndex == 0 && cpu.IsChecked != true)
             {
                 MessageBox.Show("请选择运营商", "Attention");
+                return;
             }
-            else
+
+            (string carrierValue, int key) = ResolveCarrier();
+
+            _settingData.IsAutoRun = AutoRun.IsChecked ?? false;
+            _settingData.IsAutoLogin = AutoLogin.IsChecked ?? false;
+            _settingData.IsAutoMin = AutoMin.IsChecked ?? false;
+            _settingData.IsSetLogin = SetLogin.IsChecked ?? false;
+            _settingData.Mode = ResolveMode();
+            _settingData.Username = code.Text;
+            _settingData.Password = secret.Password;
+            _settingData.Carrier = carrierValue;
+            _settingData.Key = key;
+            _settingData.LoginTime = int.Parse(loginTime.Text);
+            _settingData.Save();
+
+            var result = MessageBox.Show("保存成功", "Info");
+            if (result == MessageBoxResult.OK)
             {
-                if (!AutoRun.IsChecked.HasValue)
-                {
-                    AutoRun.IsChecked = false;
-                }
-                settingData.IsAutoRun = (bool)AutoRun.IsChecked;
-                if (!AutoLogin.IsChecked.HasValue)
-                {
-                    AutoLogin.IsChecked = false;
-                }
-                settingData.IsAutoLogin = (bool)AutoLogin.IsChecked;
-                if (!AutoMin.IsChecked.HasValue)
-                {
-                    AutoMin.IsChecked = false;
-                }
-                settingData.IsAutoMin = (bool)AutoMin.IsChecked;
-                if (!SetLogin.IsChecked.HasValue)
-                {
-                    SetLogin.IsChecked = false;
-                }
-                settingData.IsSetLogin = (bool)SetLogin.IsChecked;
-                switch (ppp.IsChecked, cpu.IsChecked, auto.IsChecked)
-                {
-                    case (true, false, false):
-                        mode = 0;
-                        break;
-                    case (false, true, false):
-                        mode = 1;
-                        break;
-                    case (false, false, true):
-                        mode = 2;
-                        break;
-                }
-                settingData.Mode = mode;
-                settingData.Username = code.Text;
-                settingData.Password = secret.Password;
-                settingData.Carrier = Carrier;
-                settingData.Key = Key;
-                settingData.LoginTime = int.Parse(loginTime.Text);
-                settingData.Save();
-                var result = MessageBox.Show("保存成功", "Info");
-                if (result == MessageBoxResult.OK)
-                {
-                    ToHome();
-                }
+                ToHome();
             }
         }
+
+        #region 辅助方法
+
+        /// <summary>
+        /// 将配置加载到 UI 控件
+        /// </summary>
+        private void LoadSettingsToUi(SettingModel data, bool isReset)
+        {
+            bool hasConfig = isReset && data.PathExist();
+            if (hasConfig)
+            {
+                data = data.Read();
+            }
+
+            code.Text = hasConfig ? data.Username : string.Empty;
+            secret.Password = hasConfig ? data.Password : string.Empty;
+            loginTime.Text = hasConfig ? data.LoginTime.ToString() : "6";
+            AutoRun.IsChecked = hasConfig && data.IsAutoRun;
+            AutoLogin.IsChecked = hasConfig && data.IsAutoLogin;
+            AutoMin.IsChecked = hasConfig && data.IsAutoMin;
+            SetLogin.IsChecked = hasConfig && data.IsSetLogin;
+
+            carrier.SelectedIndex = hasConfig ? data.Carrier switch
+            {
+                "cmcc" => 1,
+                "unicom" => 2,
+                "telecom" => 3,
+                _ => 0
+            } : 0;
+
+            ApplyModeRadio(hasConfig ? data.Mode : 0);
+        }
+
+        private void ApplyModeRadio(int mode)
+        {
+            ppp.IsChecked = mode == 0;
+            cpu.IsChecked = mode == 1;
+            auto.IsChecked = mode == 2;
+        }
+
+        private int ResolveMode()
+        {
+            return (ppp.IsChecked, cpu.IsChecked, auto.IsChecked) switch
+            {
+                (true, _, _) => 0,
+                (_, true, _) => 1,
+                (_, _, true) => 2,
+                _ => 0
+            };
+        }
+
+        private (string Carrier, int Key) ResolveCarrier()
+        {
+            return carrier.SelectedIndex switch
+            {
+                1 => ("cmcc", 1),
+                2 => ("unicom", 2),
+                3 => ("telecom", 3),
+                _ => (string.Empty, 0)
+            };
+        }
+
+        #endregion
     }
 }

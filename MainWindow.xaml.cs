@@ -3,18 +3,9 @@ using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
 using System.Windows.Media;
-using System.Windows.Threading;
-using Timer = System.Threading.Timer;
 
 namespace cpu_net
 {
@@ -34,12 +25,14 @@ namespace cpu_net
             ES_DISPLAY_REQUIRED = 0x00000002,
             ES_SYSTEM_REQUIRED = 0x00000001
         }
-        BrushConverter brushConverter = new BrushConverter();
-        Brush darkblue;
-        Brush white;
+
+        private static readonly Brush DarkBlueBrush = new SolidColorBrush(Colors.DarkBlue);
+        private static readonly Brush WhiteBrush = new SolidColorBrush(Colors.White);
+
         private HomePage _cachedHomePage = new HomePage();
         private ConfigurationPage _cachedConfigurationPage = new ConfigurationPage();
-        private MainViewModel _vm = new MainViewModel();
+        private readonly MainViewModel _vm = new MainViewModel();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -47,11 +40,9 @@ namespace cpu_net
             _cachedHomePage.ParentWindow = this;
             _cachedConfigurationPage.ParentWindow = this;
             ChangePage("home");
-            //Debug.WriteLine("action1");
-
-            //Debug.WriteLine("action2");
             DataContext = _vm;
-            SettingModel settingData = new SettingModel();
+
+            var settingData = new SettingModel();
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
@@ -65,9 +56,9 @@ namespace cpu_net
                 }
             }
         }
+
         private void PreventSleep()
         {
-            // 阻止系统休眠和关闭显示器
             SetThreadExecutionState(
                 EXECUTION_STATE.ES_CONTINUOUS |
                 EXECUTION_STATE.ES_SYSTEM_REQUIRED |
@@ -77,45 +68,31 @@ namespace cpu_net
 
         private void AllowSleep()
         {
-            // 恢复系统正常休眠
             SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
         }
+
         private void ChangePage(string name)
         {
-            darkblue = (Brush)brushConverter.ConvertFrom("DarkBlue");
-            white = (Brush)brushConverter.ConvertFrom("White");
             switch (name)
             {
                 case "home":
-                    Home_Button.BorderBrush = darkblue;
-                    Conf_Button.BorderBrush = white;
-                    if (_cachedHomePage == null)
-                    {
-                        _cachedHomePage = new HomePage();
-                        _cachedHomePage.ParentWindow = this;
-                    }
+                    Home_Button.BorderBrush = DarkBlueBrush;
+                    Conf_Button.BorderBrush = WhiteBrush;
                     PageFrame.Content = _cachedHomePage;
                     break;
                 case "conf":
-                    Home_Button.BorderBrush = white;
-                    Conf_Button.BorderBrush = darkblue;
-                    if (_cachedConfigurationPage == null)
-                    {
-                        _cachedConfigurationPage = new ConfigurationPage();
-                        _cachedConfigurationPage.ParentWindow = this;
-                    }
+                    Home_Button.BorderBrush = WhiteBrush;
+                    Conf_Button.BorderBrush = DarkBlueBrush;
                     PageFrame.Content = _cachedConfigurationPage;
                     break;
             }
         }
+
         public void loginToast()
         {
-            int a = _vm.LoginOnline();
-            //Debug.WriteLine("a="+a);
-            //Debug.WriteLine(this.Visibility);
-            if (a == 0 & this.Visibility == Visibility.Collapsed)
+            int result = _vm.LoginOnline();
+            if (result == 0 && this.Visibility == Visibility.Collapsed)
             {
-                // Debug.WriteLine("toasttest");
                 new ToastContentBuilder()
                     .AddText("登录失败")
                     .AddText("请检查网络设置")
@@ -127,60 +104,14 @@ namespace cpu_net
         public void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             MessageBoxResult result = System.Windows.MessageBox.Show("是否退出？", "询问", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            //关闭窗口
-            if (result == MessageBoxResult.Yes)
-                e.Cancel = false;
-
-            //不关闭窗口
-            if (result == MessageBoxResult.No)
-                e.Cancel = true;
+            e.Cancel = result != MessageBoxResult.Yes;
         }
+
         private void Window_StateChanged(object sender, EventArgs e)
         {
             if (this.WindowState == WindowState.Minimized)
             {
                 this.Visibility = Visibility.Hidden;
-            }
-        }
-
-        private void notifyIcon_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
-        {
-            //鼠标左键，实现窗体最小化隐藏或显示窗体
-            if (e.Button == MouseButtons.Left)
-            {
-                if (this.Visibility == Visibility.Visible)
-                {
-                    this.Visibility = Visibility.Hidden;
-                    //解决最小化到任务栏可以强行关闭程序的问题。
-                    this.ShowInTaskbar = false;//使Form不在任务栏上显示
-                }
-                else
-                {
-                    this.Visibility = Visibility.Visible;
-                    //解决最小化到任务栏可以强行关闭程序的问题。
-                    this.ShowInTaskbar = false;//使Form不在任务栏上显示
-                    this.Activate();
-                }
-            }
-            if (e.Button == MouseButtons.Right)
-            {
-                //object sender = new object();
-                // EventArgs e = new EventArgs();
-                exit_Click(sender, e);//触发单击退出事件
-            }
-        }
-        // 退出选项
-        private void exit_Click(object sender, EventArgs e)
-        {
-            if (System.Windows.MessageBox.Show("是否退出？",
-                                               "询问",
-                                                MessageBoxButton.YesNo,
-                                                MessageBoxImage.Question,
-                                                MessageBoxResult.Yes) == MessageBoxResult.Yes)
-            {
-                //System.Windows.Application.Current.Shutdown();
-                System.Environment.Exit(0);
             }
         }
 
@@ -193,9 +124,10 @@ namespace cpu_net
         {
             ChangePage("conf");
         }
+
         protected override void OnClosed(EventArgs e)
         {
-            AllowSleep(); // 窗口关闭时恢复休眠
+            AllowSleep();
             base.OnClosed(e);
         }
     }
