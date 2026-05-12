@@ -1,0 +1,88 @@
+<Page x:Class="cpu_net.Views.Pages.ElectricityPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:cpu_net.Views.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="ElectricityPage">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="8*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Column="1" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- 标题 -->
+            <TextBlock Grid.Row="0" Text="电费查询" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+            
+            <!-- 状态卡片 -->
+            <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,15"
+                    Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="剩余电费" FontSize="14" Foreground="Gray" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="BalanceText" Text="--" FontSize="42" FontWeight="Bold" Foreground="#1890FF" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="StatusText" Text="未查询" FontSize="12" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                        <!-- 网络状态指示器 -->
+                        <StackPanel x:Name="NetworkStatusPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0" Visibility="Collapsed">
+                            <Ellipse x:Name="NetworkStatusDot" Width="8" Height="8" Fill="Gray" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NetworkStatusText" Text="" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- 房间信息 / 错误提示 -->
+            <TextBlock Grid.Row="2" x:Name="RoomInfoText" Text="" FontSize="13" Foreground="#666" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <TextBlock Grid.Row="2" x:Name="ErrorTipText" Text="" FontSize="12" Foreground="OrangeRed" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,10" Visibility="Collapsed"/>
+            
+            <!-- 操作按钮 -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                <Button x:Name="RefreshButton" Width="120" Height="38" FontSize="14" Click="RefreshButton_Click" Margin="0,0,15,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="RefreshIcon" Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="RefreshText" Text="刷新" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="SettingsButton" Content="查询设置" Width="120" Height="38" FontSize="14" Click="SettingsButton_Click"/>
+            </StackPanel>
+            
+            <!-- 查询日志 -->
+            <Grid Grid.Row="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="查询日志" FontSize="14" FontWeight="Bold" Margin="0,0,0,5"/>
+                <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBox x:Name="LogTextBox" IsReadOnly="True" TextWrapping="Wrap" 
+                                 BorderThickness="0" Padding="8" Background="Transparent"
+                                 FontSize="12" FontFamily="Consolas"/>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

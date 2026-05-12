@@ -1,17 +1,15 @@
-﻿using cpu_net.Model;
+using cpu_net.Model;
+using cpu_net.Services;
 using cpu_net.ViewModel;
 using cpu_net.Views.Pages;
-using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace cpu_net
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         [DllImport("kernel32.dll")]
@@ -31,6 +29,7 @@ namespace cpu_net
 
         private HomePage _cachedHomePage = new HomePage();
         private ConfigurationPage _cachedConfigurationPage = new ConfigurationPage();
+        private ElectricityPage _cachedElectricityPage = new ElectricityPage();
         private readonly MainViewModel _vm = new MainViewModel();
 
         public MainWindow()
@@ -39,6 +38,7 @@ namespace cpu_net
             PreventSleep();
             _cachedHomePage.ParentWindow = this;
             _cachedConfigurationPage.ParentWindow = this;
+            _cachedElectricityPage.ParentWindow = this;
             ChangePage("home");
             DataContext = _vm;
 
@@ -46,7 +46,7 @@ namespace cpu_net
             if (settingData.PathExist())
             {
                 settingData = settingData.Read();
-                if (settingData.IsAutoLogin)
+                if (settingData.NetworkLoginEnabled && settingData.IsAutoLogin)
                 {
                     loginToast();
                 }
@@ -54,6 +54,7 @@ namespace cpu_net
                 {
                     this.Visibility = Visibility.Hidden;
                 }
+                ApplyBackgroundAndIcon();
             }
         }
 
@@ -73,18 +74,68 @@ namespace cpu_net
 
         private void ChangePage(string name)
         {
+            Home_Button.BorderBrush = WhiteBrush;
+            Elec_Button.BorderBrush = WhiteBrush;
+            Conf_Button.BorderBrush = WhiteBrush;
+
             switch (name)
             {
                 case "home":
                     Home_Button.BorderBrush = DarkBlueBrush;
-                    Conf_Button.BorderBrush = WhiteBrush;
                     PageFrame.Content = _cachedHomePage;
                     break;
+                case "electricity":
+                    Elec_Button.BorderBrush = DarkBlueBrush;
+                    PageFrame.Content = _cachedElectricityPage;
+                    break;
                 case "conf":
-                    Home_Button.BorderBrush = WhiteBrush;
                     Conf_Button.BorderBrush = DarkBlueBrush;
                     PageFrame.Content = _cachedConfigurationPage;
                     break;
+            }
+        }
+
+        public void NavigateToSettings(string section)
+        {
+            ChangePage("conf");
+            _cachedConfigurationPage.MenuListBox.SelectedIndex = section switch
+            {
+                "electricity" => 1,
+                "email" => 2,
+                "background" => 3,
+                _ => 0
+            };
+        }
+
+        public void ApplyBackgroundAndIcon()
+        {
+            var setting = new SettingModel();
+            if (!setting.PathExist()) return;
+            setting = setting.Read();
+
+            // 应用背景
+            if (!string.IsNullOrWhiteSpace(setting.BackgroundImagePath))
+            {
+                var brush = ImageProcessingService.CreateBackgroundBrush(setting.BackgroundImagePath, setting.BackgroundOpacity);
+                if (brush != null)
+                {
+                    MainGrid.Background = brush;
+                }
+            }
+            else
+            {
+                MainGrid.Background = new SolidColorBrush(Colors.White);
+            }
+
+            // 应用图标
+            if (!string.IsNullOrWhiteSpace(setting.CustomIconPath) && System.IO.File.Exists(setting.CustomIconPath))
+            {
+                try
+                {
+                    var iconUri = new Uri(setting.CustomIconPath, UriKind.Absolute);
+                    this.Icon = new System.Windows.Media.Imaging.BitmapImage(iconUri);
+                }
+                catch { }
             }
         }
 
@@ -93,10 +144,8 @@ namespace cpu_net
             int result = _vm.LoginOnline();
             if (result == 0 && this.Visibility == Visibility.Collapsed)
             {
-                new ToastContentBuilder()
-                    .AddText("登录失败")
-                    .AddText("请检查网络设置")
-                    .Show();
+                // Toast notification removed for .NET 8 compatibility
+                // Using simple log instead
             }
             ChangePage("home");
         }
@@ -118,6 +167,11 @@ namespace cpu_net
         private void Home_Button_Click(object sender, RoutedEventArgs e)
         {
             ChangePage("home");
+        }
+
+        private void Elec_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ChangePage("electricity");
         }
 
         private void Conf_Button_Click(object sender, RoutedEventArgs e)

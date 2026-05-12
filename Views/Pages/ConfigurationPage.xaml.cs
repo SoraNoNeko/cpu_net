@@ -1,4 +1,5 @@
-﻿using cpu_net.Model;
+using cpu_net.Model;
+using cpu_net.ViewModel;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -9,12 +10,10 @@ using System.Windows.Threading;
 
 namespace cpu_net.Views.Pages
 {
-    /// <summary>
-    /// ConfigurationPage.xaml 的交互逻辑
-    /// </summary>
     public partial class ConfigurationPage : Page
     {
         private SettingModel _settingData = new SettingModel();
+        private bool _isScrollingFromMenu = false;
 
         public MainWindow ParentWindow { get; set; }
 
@@ -22,6 +21,9 @@ namespace cpu_net.Views.Pages
         {
             InitializeComponent();
             LoadSettingsToUi(new SettingModel(), isReset: true);
+
+            MenuListBox.SelectionChanged += MenuListBox_SelectionChanged;
+            ContentScrollViewer.ScrollChanged += ContentScrollViewer_ScrollChanged;
         }
 
         private void Code_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -54,20 +56,29 @@ namespace cpu_net.Views.Pages
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(code.Text) || string.IsNullOrEmpty(secret.Password))
+            // 保存网络设置
+            if (NetworkEnabledCheckBox.IsChecked == true)
             {
-                MessageBox.Show("请输入学号和密码", "Attention");
-                return;
-            }
+                if (string.IsNullOrEmpty(code.Text) || string.IsNullOrEmpty(secret.Password))
+                {
+                    ScrollToSection(NetworkPanel);
+                    MenuListBox.SelectedIndex = 0;
+                    MessageBox.Show("请输入学号和密码", "Attention");
+                    return;
+                }
 
-            if (carrier.SelectedIndex == 0 && cpu.IsChecked != true)
-            {
-                MessageBox.Show("请选择运营商", "Attention");
-                return;
+                if (carrier.SelectedIndex == 0 && cpu.IsChecked != true)
+                {
+                    ScrollToSection(NetworkPanel);
+                    MenuListBox.SelectedIndex = 0;
+                    MessageBox.Show("请选择运营商", "Attention");
+                    return;
+                }
             }
 
             (string carrierValue, int key) = ResolveCarrier();
 
+            _settingData.NetworkLoginEnabled = NetworkEnabledCheckBox.IsChecked ?? true;
             _settingData.IsAutoRun = AutoRun.IsChecked ?? false;
             _settingData.IsAutoLogin = AutoLogin.IsChecked ?? false;
             _settingData.IsAutoMin = AutoMin.IsChecked ?? false;
@@ -78,7 +89,26 @@ namespace cpu_net.Views.Pages
             _settingData.Carrier = carrierValue;
             _settingData.Key = key;
             _settingData.LoginTime = int.Parse(loginTime.Text);
+
+            // 保存电费设置
+            ElectricitySettings.SaveSettings(_settingData);
+
+            // 保存邮件设置
+            EmailSettings.SaveSettings(_settingData);
+
+            // 保存背景设置
+            BackgroundSettings.SaveSettings(_settingData);
+
             _settingData.Save();
+
+            // 应用背景和图标
+            ParentWindow.ApplyBackgroundAndIcon();
+
+            // 重启定时器以应用新的间隔设置
+            if (ParentWindow.DataContext is MainViewModel vm)
+            {
+                vm.TimerMain();
+            }
 
             var result = MessageBox.Show("保存成功", "Info");
             if (result == MessageBoxResult.OK)
@@ -87,11 +117,83 @@ namespace cpu_net.Views.Pages
             }
         }
 
+        private void MenuListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 由滚动联动触发的选中变更不应再执行滚动，避免循环重置
+            if (_isScrollingFromMenu) return;
+            if (MenuListBox?.SelectedItem is not ListBoxItem item) return;
+
+            string tag = item.Tag?.ToString() ?? "network";
+
+            FrameworkElement? target = tag switch
+            {
+                "network" => NetworkPanel,
+                "electricity" => ElectricitySettings,
+                "email" => EmailSettings,
+                "background" => BackgroundSettings,
+                "about" => AboutPanel,
+                _ => null
+            };
+
+            ScrollToSection(target);
+        }
+
+        private void ScrollToSection(FrameworkElement? target)
+        {
+            if (target == null || ContentScrollViewer == null) return;
+
+            _isScrollingFromMenu = true;
+            var point = target.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
+            ContentScrollViewer.ScrollToVerticalOffset(point.Y);
+            _isScrollingFromMenu = false;
+        }
+
+        private void ContentScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (_isScrollingFromMenu) return;
+            if (ContentScrollViewer == null) return;
+
+            double viewportHeight = ContentScrollViewer.ViewportHeight;
+
+            var sections = new (FrameworkElement? Element, int Index)[]
+            {
+                (NetworkPanel, 0),
+                (ElectricitySettings, 1),
+                (EmailSettings, 2),
+                (BackgroundSettings, 3),
+                (AboutPanel, 4)
+            };
+
+            int bestIndex = 0;
+            double bestVisibility = double.MinValue;
+
+            foreach (var (element, index) in sections)
+            {
+                if (element == null) continue;
+                var point = element.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
+                double elementTop = point.Y;
+                double elementBottom = elementTop + element.ActualHeight;
+                double visibleTop = Math.Max(elementTop, 0);
+                double visibleBottom = Math.Min(elementBottom, viewportHeight);
+                double visibility = Math.Max(0, visibleBottom - visibleTop);
+
+                if (visibility > bestVisibility)
+                {
+                    bestVisibility = visibility;
+                    bestIndex = index;
+                }
+            }
+
+            if (MenuListBox.SelectedIndex != bestIndex)
+            {
+                _isScrollingFromMenu = true;
+                MenuListBox.SelectedIndex = bestIndex;
+                _isScrollingFromMenu = false;
+            }
+        }
+
         #region 辅助方法
 
-        /// <summary>
-        /// 将配置加载到 UI 控件
-        /// </summary>
         private void LoadSettingsToUi(SettingModel data, bool isReset)
         {
             bool hasConfig = isReset && data.PathExist();
@@ -100,6 +202,8 @@ namespace cpu_net.Views.Pages
                 data = data.Read();
             }
 
+            // 网络设置
+            NetworkEnabledCheckBox.IsChecked = !hasConfig || data.NetworkLoginEnabled;
             code.Text = hasConfig ? data.Username : string.Empty;
             secret.Password = hasConfig ? data.Password : string.Empty;
             loginTime.Text = hasConfig ? data.LoginTime.ToString() : "6";
@@ -117,6 +221,15 @@ namespace cpu_net.Views.Pages
             } : 0;
 
             ApplyModeRadio(hasConfig ? data.Mode : 0);
+
+            // 电费设置
+            ElectricitySettings.LoadSettings(data);
+
+            // 邮件设置
+            EmailSettings.LoadSettings(data);
+
+            // 背景设置
+            BackgroundSettings.LoadSettings(data);
         }
 
         private void ApplyModeRadio(int mode)

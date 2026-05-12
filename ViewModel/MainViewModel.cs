@@ -3,9 +3,9 @@ using cpu_net.Constants;
 using cpu_net.Model;
 using cpu_net.Services;
 using cpu_net.ViewModel.Base;
-using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
@@ -19,6 +19,8 @@ namespace cpu_net.ViewModel
     {
         private readonly SettingModel _settingData = new SettingModel();
         private Timer? _timer;
+        private Timer? _electricityTimer;
+        private readonly ElectricityService _electricityService = new ElectricityService();
         private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient
         {
             Timeout = TimeSpan.FromSeconds(5)
@@ -34,15 +36,36 @@ namespace cpu_net.ViewModel
         {
             var setting = new SettingModel();
             int intervalMs = 1000;
-
+            int elecDueMs = Timeout.Infinite;
             if (setting.PathExist())
             {
                 setting = setting.Read();
-                intervalMs = setting.LoginTime * 1000;
+                if (setting.NetworkLoginEnabled)
+                {
+                    intervalMs = setting.LoginTime * 1000;
+                }
+                else
+                {
+                    intervalMs = Timeout.Infinite;
+                }
+                if (setting.ElectricityEnabled)
+                {
+                    var now = DateTime.Now;
+                    var target = new DateTime(now.Year, now.Month, now.Day, setting.ElectricityCheckHour, setting.ElectricityCheckMinute, 0);
+                    if (target <= now)
+                        target = target.AddDays(1);
+                    elecDueMs = (int)(target - now).TotalMilliseconds;
+                }
             }
 
             _timer?.Dispose();
             _timer = new Timer(LoginCheck, null, intervalMs, intervalMs);
+
+            _electricityTimer?.Dispose();
+            if (elecDueMs != Timeout.Infinite)
+            {
+                _electricityTimer = new Timer(ElectricityCheck, null, elecDueMs, Timeout.Infinite);
+            }
         }
 
         private async void LoginCheck(object? state)
@@ -55,6 +78,10 @@ namespace cpu_net.ViewModel
             if (setting.PathExist())
             {
                 setting = setting.Read();
+                if (!setting.NetworkLoginEnabled)
+                {
+                    return;
+                }
                 isSetLogin = setting.IsSetLogin;
                 testUrl = setting.TestUrl;
                 testCode = setting.TestCode;
@@ -109,6 +136,67 @@ namespace cpu_net.ViewModel
             {
                 LoginOnline();
                 Record("检测到网络断开连接，已尝试重连");
+            }
+        }
+
+        private async void ElectricityCheck(object? state)
+        {
+            var setting = new SettingModel();
+            if (!setting.PathExist()) return;
+            setting = setting.Read();
+
+            if (!setting.ElectricityEnabled || string.IsNullOrWhiteSpace(setting.ElectricityStudentNo))
+            {
+                return;
+            }
+
+            try
+            {
+                Record($"[{DateTime.Now:HH:mm:ss}] 开始电费查询...");
+                var result = await _electricityService.QueryAsync(setting.ElectricityStudentNo);
+
+                if (result.IsRoomNotBound)
+                {
+                    Record($"[{DateTime.Now:HH:mm:ss}] 电费查询: 未绑定房间");
+                    await NotifyService.SendRoomNotBoundAlertAsync(setting, setting.ElectricityStudentNo);
+                    Record($"[{DateTime.Now:HH:mm:ss}] 已发送未绑定房间提醒");
+                }
+                else if (result.Success && (result.Balance.HasValue || result.Degrees.HasValue))
+                {
+                    var balanceText = result.Balance.HasValue ? $"余额 {result.Balance.Value:F2} 元" : "";
+                    var degreesText = result.Degrees.HasValue ? $"电量 {result.Degrees.Value:F2} 度" : "";
+                    var infoText = string.Join(" / ", new[] { balanceText, degreesText }.Where(s => !string.IsNullOrEmpty(s)));
+                    Record($"[{DateTime.Now:HH:mm:ss}] 电费查询: {infoText}");
+
+                    bool isBelowThreshold = setting.ElectricityThresholdMode switch
+                    {
+                        1 => result.Degrees.HasValue && result.Degrees.Value < setting.ElectricityThreshold,
+                        _ => result.Balance.HasValue && result.Balance.Value < setting.ElectricityThreshold,
+                    };
+
+                    if (isBelowThreshold)
+                    {
+                        var alertValue = setting.ElectricityThresholdMode == 1
+                            ? (result.Degrees ?? 0)
+                            : (result.Balance ?? 0);
+                        await NotifyService.SendElectricityAlertAsync(setting, alertValue, result.RoomInfo);
+                        var alertType = setting.ElectricityThresholdMode == 1 ? "电量" : "余额";
+                        Record($"[{DateTime.Now:HH:mm:ss}] {alertType}低于阈值，已发送提醒");
+                    }
+                }
+                else
+                {
+                    Record($"[{DateTime.Now:HH:mm:ss}] 电费查询失败: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Record($"[{DateTime.Now:HH:mm:ss}] 电费查询异常: {ex.Message}");
+            }
+            finally
+            {
+                // 重新设置下一天的定时器
+                TimerMain();
             }
         }
 

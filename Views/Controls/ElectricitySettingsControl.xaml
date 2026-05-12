@@ -1,0 +1,69 @@
+<UserControl x:Class="cpu_net.Views.Controls.ElectricitySettingsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="380" d:DesignWidth="500">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <CheckBox x:Name="EnabledCheckBox" Content="启用电费查询定时提醒" Margin="0,5" FontSize="14"/>
+        
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="学号:" VerticalAlignment="Center" FontSize="14"/>
+            <TextBox x:Name="StudentNoTextBox" Grid.Row="0" Grid.Column="1" FontSize="14" Padding="5,2" Margin="5,5"/>
+            
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="提醒阈值:" VerticalAlignment="Center" FontSize="14"/>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="5,5">
+                <TextBox x:Name="ThresholdTextBox" Width="100" FontSize="14" Padding="5,2"/>
+                <ComboBox x:Name="ThresholdModeComboBox" Width="140" FontSize="14" Padding="5,2" Margin="5,0,0,0"
+                          SelectedIndex="0">
+                    <ComboBoxItem Content="剩余费用（元）" Tag="0"/>
+                    <ComboBoxItem Content="剩余度数（度）" Tag="1"/>
+                </ComboBox>
+            </StackPanel>
+            
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="每天查询时间:" VerticalAlignment="Center" FontSize="14"/>
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="5,5">
+                <ComboBox x:Name="CheckHourComboBox" Width="60" FontSize="14" Padding="5,2"/>
+                <TextBlock Text=":" VerticalAlignment="Center" Margin="3,0" FontSize="14"/>
+                <ComboBox x:Name="CheckMinuteComboBox" Width="60" FontSize="14" Padding="5,2"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="提醒方式:" VerticalAlignment="Center" FontSize="14"/>
+            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5,5">
+                <ComboBox x:Name="NotifyTypeComboBox" Width="180" FontSize="14" Padding="5,2">
+                    <ComboBoxItem Content="Windows 系统通知" Tag="0"/>
+                    <ComboBoxItem Content="邮件通知" Tag="1"/>
+                    <ComboBoxItem Content="系统通知 + 邮件" Tag="2"/>
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+        
+        <TextBlock Grid.Row="2" Text="调试学号: 3325092263" FontSize="12" Foreground="Gray" Margin="0,10,0,0"/>
+        
+        <TextBlock Grid.Row="3" TextWrapping="Wrap" FontSize="12" Foreground="#666" Margin="0,10,0,0">
+            说明：系统会自动尝试多种API端点获取电费余额。如果查询失败，请检查学号是否正确，或前往能源管控平台确认账号状态。
+        </TextBlock>
+    </Grid>
+</UserControl>

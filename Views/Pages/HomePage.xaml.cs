@@ -106,7 +106,7 @@ namespace cpu_net.Views.Pages
 
         private void textLog_TextChanged(object sender, TextChangedEventArgs e)
         {
-            sv1.ScrollToEnd();
+            sv1?.ScrollToEnd();
         }
     }
 }

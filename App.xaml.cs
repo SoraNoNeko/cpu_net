@@ -1,7 +1,6 @@
 ﻿using cpu_net.Model;
 using cpu_net.Services;
 using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -20,25 +19,7 @@ namespace cpu_net
             RegisterEvents();
             base.OnStartup(e);
             TaskbarIcon = (TaskbarIcon)FindResource("Taskbar");
-            // Listen to notification activation
-            ToastNotificationManagerCompat.OnActivated += toastArgs =>
-            {
-                // Obtain the arguments from the notification
-                ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
-
-                // Obtain any user input (text boxes, menu selections) from the notification
-                //ValueSet userInput = toastArgs.UserInput;
-
-                // Need to dispatch to UI thread if performing UI operations
-                Application.Current.Dispatcher.Invoke(delegate
-                {
-                    // TODO: Show the corresponding content
-                    //MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
-                    Application.Current.MainWindow.Visibility = Visibility.Visible;
-                    Application.Current.MainWindow.Show();
-                    Application.Current.MainWindow.Activate();
-                });
-            };
+            // Toast notification removed for .NET 8 compatibility
         }
         private void RegisterEvents()
         {
