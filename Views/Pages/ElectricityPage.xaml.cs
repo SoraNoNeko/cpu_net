@@ -55,6 +55,9 @@ namespace cpu_net.Views.Pages
                     ShowErrorTip($"无法访问电费服务器: {serverMsg}\n请检查网络连接或确认服务器地址是否正确。");
                     BalanceText.Text = "--";
                     BalanceText.Foreground = Brushes.Gray;
+                    DegreesText.Text = "--";
+                    DegreesText.Foreground = Brushes.Gray;
+                    RoomInfoText.Text = "";
                     StatusText.Text = "服务器不可达";
                     AppendLog($"[{DateTime.Now:HH:mm:ss}] 服务器不可达: {serverMsg}");
                     return;
@@ -66,19 +69,18 @@ namespace cpu_net.Views.Pages
                 {
                     BalanceText.Text = "--";
                     BalanceText.Foreground = Brushes.Orange;
-                    StatusText.Text = "未绑定房间";
+                    DegreesText.Text = "--";
+                    DegreesText.Foreground = Brushes.Orange;
                     RoomInfoText.Text = "";
+                    StatusText.Text = "未绑定房间";
                     AppendLog($"[{DateTime.Now:HH:mm:ss}] 查询结果: 未绑定房间");
                     await NotifyService.SendRoomNotBoundAlertAsync(setting, setting.ElectricityStudentNo);
                     AppendLog($"[{DateTime.Now:HH:mm:ss}] 已发送未绑定房间提醒");
                 }
                 else if (result.Success && (result.Balance.HasValue || result.Degrees.HasValue))
                 {
-                    // 组合显示余额和度数
-                    var parts = new System.Collections.Generic.List<string>();
-                    if (result.Balance.HasValue) parts.Add($"{result.Balance.Value:F2} 元");
-                    if (result.Degrees.HasValue) parts.Add($"{result.Degrees.Value:F2} 度");
-                    BalanceText.Text = string.Join(" / ", parts);
+                    BalanceText.Text = result.Balance.HasValue ? $"{result.Balance.Value:F2} 元" : "--";
+                    DegreesText.Text = result.Degrees.HasValue ? $"{result.Degrees.Value:F2} 度" : "--";
 
                     // 根据衡量模式判断阈值
                     bool isBelowThreshold = setting.ElectricityThresholdMode switch
@@ -86,7 +88,19 @@ namespace cpu_net.Views.Pages
                         1 => result.Degrees.HasValue && result.Degrees.Value < setting.ElectricityThreshold,
                         _ => result.Balance.HasValue && result.Balance.Value < setting.ElectricityThreshold,
                     };
-                    BalanceText.Foreground = isBelowThreshold ? Brushes.Red : Brushes.ForestGreen;
+
+                    if (setting.ElectricityThresholdMode == 1)
+                    {
+                        // 度数模式：仅度数参与阈值判断
+                        BalanceText.Foreground = Brushes.ForestGreen;
+                        DegreesText.Foreground = isBelowThreshold ? Brushes.Red : Brushes.ForestGreen;
+                    }
+                    else
+                    {
+                        // 费用模式：仅费用参与阈值判断
+                        BalanceText.Foreground = isBelowThreshold ? Brushes.Red : Brushes.ForestGreen;
+                        DegreesText.Foreground = Brushes.ForestGreen;
+                    }
 
                     StatusText.Text = $"上次刷新: {result.QueryTime:HH:mm:ss}";
                     RoomInfoText.Text = string.IsNullOrEmpty(result.RoomInfo) ? "" : $"房间: {result.RoomInfo}";
@@ -110,6 +124,9 @@ namespace cpu_net.Views.Pages
                 {
                     BalanceText.Text = "--";
                     BalanceText.Foreground = Brushes.Gray;
+                    DegreesText.Text = "--";
+                    DegreesText.Foreground = Brushes.Gray;
+                    RoomInfoText.Text = "";
                     StatusText.Text = "查询失败";
                     string errDetail = result.ErrorMessage ?? "未知错误";
                     ShowErrorTip($"刷新失败: {errDetail}\n请确认学号正确，或服务器是否正常运行。");
@@ -124,6 +141,9 @@ namespace cpu_net.Views.Pages
             {
                 BalanceText.Text = "--";
                 BalanceText.Foreground = Brushes.Gray;
+                DegreesText.Text = "--";
+                DegreesText.Foreground = Brushes.Gray;
+                RoomInfoText.Text = "";
                 StatusText.Text = "查询异常";
                 ShowErrorTip($"发生异常: {ex.Message}\n请检查网络连接或稍后重试。");
                 AppendLog($"[{DateTime.Now:HH:mm:ss}] 异常: {ex.Message}");
@@ -202,6 +222,7 @@ namespace cpu_net.Views.Pages
         {
             LogTextBox.AppendText(message + Environment.NewLine);
             LogTextBox.ScrollToEnd();
+            LoggingService.WriteTextLog(message, "Log", false);
         }
     }
 }

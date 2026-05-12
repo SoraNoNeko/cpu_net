@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace cpu_net.Services
 {
@@ -10,7 +11,7 @@ namespace cpu_net.Services
     /// </summary>
     public static class LoggingService
     {
-        private static readonly ReaderWriterLockSlim LogWriteLock = new ReaderWriterLockSlim();
+        private static readonly SemaphoreSlim LogSemaphore = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// 写入异常日志到 ErrorLog 目录（按天分文件）
@@ -26,32 +27,37 @@ namespace cpu_net.Services
             string fileName = $"{now.Year}{now.Month:D2}{now.Day:D2}.log";
             string logPath = Path.Combine("ErrorLog", fileName);
 
-            var log = "\r\n----------------------" + DateTime.Now + " --------------------------\r\n"
+            var log = Environment.NewLine + "----------------------" + DateTime.Now + " --------------------------" + Environment.NewLine
                       + ex.Message
-                      + "\r\n"
+                      + Environment.NewLine
                       + ex.InnerException
-                      + "\r\n"
+                      + Environment.NewLine
                       + ex.StackTrace
-                      + "\r\n----------------------footer--------------------------\r\n";
+                      + Environment.NewLine + "----------------------footer--------------------------" + Environment.NewLine;
 
             try
             {
-                LogWriteLock.EnterWriteLock();
+                LogSemaphore.Wait();
                 File.AppendAllText(logPath, log);
             }
             finally
             {
-                LogWriteLock.ExitWriteLock();
+                LogSemaphore.Release();
             }
         }
 
         /// <summary>
-        /// 写入运行时日志
+        /// 写入运行时日志（同步入口，内部转异步，不阻塞调用方）
         /// </summary>
-        /// <param name="log">日志内容</param>
-        /// <param name="logName">日志目录名（Log / RecordLog）</param>
-        /// <param name="testMode">是否处于测试模式（RecordLog 仅在测试模式下写入）</param>
         public static void WriteTextLog(string log, string logName, bool testMode)
+        {
+            _ = WriteTextLogAsync(log, logName, testMode);
+        }
+
+        /// <summary>
+        /// 异步写入运行时日志
+        /// </summary>
+        public static async Task WriteTextLogAsync(string log, string logName, bool testMode)
         {
             if (!testMode && logName == "RecordLog")
             {
@@ -69,28 +75,25 @@ namespace cpu_net.Services
                 : $"{now.Year}{now.Month:D2}.log";
 
             string logPath = Path.Combine(logName, fileName);
-            var formattedLog = $"{DateTime.Now:M-d HH:mm:ss}  {log}\r\n";
+            var formattedLog = $"{DateTime.Now:M-d HH:mm:ss}  {log}{Environment.NewLine}";
 
+            await LogSemaphore.WaitAsync();
             try
             {
-                LogWriteLock.EnterWriteLock();
-                File.AppendAllText(logPath, formattedLog);
+                await File.AppendAllTextAsync(logPath, formattedLog);
             }
             finally
             {
-                LogWriteLock.ExitWriteLock();
+                LogSemaphore.Release();
             }
         }
 
         /// <summary>
-        /// 读取日志文件最后 10 行
+        /// 读取日志文件最后 N 行
         /// </summary>
-        /// <param name="logName">日志目录名</param>
-        /// <returns>日志文本</returns>
-        public static string ReadLogText(string logName)
+        public static string ReadLogText(string logName, int maxLines = 200)
         {
             var now = DateTime.Now;
-            // RecordLog 按天分文件，Log 按月分文件，与 WriteTextLog 保持一致
             string fileName = logName == "RecordLog"
                 ? $"{now.Year}{now.Month:D2}{now.Day:D2}.log"
                 : $"{now.Year}{now.Month:D2}.log";
@@ -103,14 +106,15 @@ namespace cpu_net.Services
 
             try
             {
-                LogWriteLock.EnterReadLock();
-                var lines = File.ReadLines(logPath);
-                var last10Lines = lines.Skip(Math.Max(0, lines.Count() - 10)).ToArray();
-                return string.Join(Environment.NewLine, last10Lines);
+                var allLines = File.ReadAllLines(logPath);
+                var lines = allLines.Length > maxLines
+                    ? allLines.Skip(allLines.Length - maxLines)
+                    : allLines;
+                return string.Join(Environment.NewLine, lines);
             }
-            finally
+            catch
             {
-                LogWriteLock.ExitReadLock();
+                return string.Empty;
             }
         }
     }

@@ -4,12 +4,14 @@ using cpu_net.Model;
 using cpu_net.Services;
 using cpu_net.ViewModel.Base;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using Timer = System.Threading.Timer;
 
@@ -26,10 +28,36 @@ namespace cpu_net.ViewModel
             Timeout = TimeSpan.FromSeconds(5)
         };
 
+        // 内存日志缓冲区（即时显示，不依赖文件IO）
+        private readonly Queue<string> _txtLogQueue = new Queue<string>();
+        private readonly Queue<string> _recordLogQueue = new Queue<string>();
+        private const int MaxLogLines = 500;
+
         public MainViewModel()
         {
             Debug.WriteLine("MainViewModel constructor called.");
+            _ = LoadHistoryLogsAsync();
             TimerMain();
+        }
+
+        /// <summary>
+        /// 启动时异步加载历史日志到内存
+        /// </summary>
+        private async Task LoadHistoryLogsAsync()
+        {
+            var txtLog = await Task.Run(() => LoggingService.ReadLogText("Log", MaxLogLines));
+            var recordLog = await Task.Run(() => LoggingService.ReadLogText("RecordLog", MaxLogLines));
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                foreach (var line in txtLog.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                    _txtLogQueue.Enqueue(line);
+                foreach (var line in recordLog.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                    _recordLogQueue.Enqueue(line);
+
+                OnPropertyChanged(nameof(TxtLog));
+                OnPropertyChanged(nameof(RecordLog));
+            });
         }
 
         public void TimerMain()
@@ -152,6 +180,14 @@ namespace cpu_net.ViewModel
 
             try
             {
+                // 维护时段检查（23:00-08:00）
+                var now = DateTime.Now;
+                if (now.Hour >= 23 || now.Hour < 8)
+                {
+                    Record($"[{now:HH:mm:ss}] 电费查询跳过：服务器维护时段（23:00-08:00）");
+                    return;
+                }
+
                 Record($"[{DateTime.Now:HH:mm:ss}] 开始电费查询...");
                 var result = await _electricityService.QueryAsync(setting.ElectricityStudentNo);
 
@@ -192,6 +228,7 @@ namespace cpu_net.ViewModel
             catch (Exception ex)
             {
                 Record($"[{DateTime.Now:HH:mm:ss}] 电费查询异常: {ex.Message}");
+                Info($"电费查询异常: {ex.Message}");
             }
             finally
             {
@@ -202,34 +239,31 @@ namespace cpu_net.ViewModel
 
         #region 日志属性与命令
 
-        public string TxtLog
-        {
-            get => LoggingService.ReadLogText("Log");
-            set
-            {
-                LoggingService.WriteTextLog(value, "Log", _settingData.TestMode);
-                OnPropertyChanged();
-            }
-        }
-
-        public string RecordLog
-        {
-            get => LoggingService.ReadLogText("RecordLog");
-            set
-            {
-                LoggingService.WriteTextLog(value, "RecordLog", _settingData.TestMode);
-                OnPropertyChanged();
-            }
-        }
+        public string TxtLog => string.Join(Environment.NewLine, _txtLogQueue);
+        public string RecordLog => string.Join(Environment.NewLine, _recordLogQueue);
 
         public void Info(string message)
         {
-            TxtLog = message;
+            var line = $"{DateTime.Now:M-d HH:mm:ss}  {message}";
+            lock (_txtLogQueue)
+            {
+                _txtLogQueue.Enqueue(line);
+                while (_txtLogQueue.Count > MaxLogLines) _txtLogQueue.Dequeue();
+            }
+            OnPropertyChanged(nameof(TxtLog));
+            LoggingService.WriteTextLog(message, "Log", _settingData.TestMode);
         }
 
         public void Record(string message)
         {
-            RecordLog = message;
+            var line = $"{DateTime.Now:M-d HH:mm:ss}  {message}";
+            lock (_recordLogQueue)
+            {
+                _recordLogQueue.Enqueue(line);
+                while (_recordLogQueue.Count > MaxLogLines) _recordLogQueue.Dequeue();
+            }
+            OnPropertyChanged(nameof(RecordLog));
+            LoggingService.WriteTextLog(message, "RecordLog", _settingData.TestMode);
         }
 
         private RelayCommand? _noticeButtonClick;

@@ -91,7 +91,8 @@ namespace cpu_net.Views.Pages
             _settingData.LoginTime = int.Parse(loginTime.Text);
 
             // 保存电费设置
-            ElectricitySettings.SaveSettings(_settingData);
+            if (!ElectricitySettings.SaveSettings(_settingData))
+                return;
 
             // 保存邮件设置
             EmailSettings.SaveSettings(_settingData);
@@ -110,11 +111,7 @@ namespace cpu_net.Views.Pages
                 vm.TimerMain();
             }
 
-            var result = MessageBox.Show("保存成功", "Info");
-            if (result == MessageBoxResult.OK)
-            {
-                ToHome();
-            }
+            MessageBox.Show("保存成功", "Info");
         }
 
         private void MenuListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -141,11 +138,27 @@ namespace cpu_net.Views.Pages
         private void ScrollToSection(FrameworkElement? target)
         {
             if (target == null || ContentScrollViewer == null) return;
+            if (!target.IsLoaded)
+            {
+                // 控件尚未加载到可视树，延迟到布局完成后重试
+                Dispatcher.BeginInvoke(() => ScrollToSection(target), System.Windows.Threading.DispatcherPriority.Loaded);
+                return;
+            }
 
             _isScrollingFromMenu = true;
-            var point = target.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
-            ContentScrollViewer.ScrollToVerticalOffset(point.Y);
-            _isScrollingFromMenu = false;
+            try
+            {
+                var point = target.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
+                ContentScrollViewer.ScrollToVerticalOffset(point.Y);
+            }
+            catch (InvalidOperationException)
+            {
+                // 目标控件与 ScrollViewer 暂不在同一可视树中（页面布局尚未完成）
+            }
+            finally
+            {
+                _isScrollingFromMenu = false;
+            }
         }
 
         private void ContentScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)

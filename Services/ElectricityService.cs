@@ -1,5 +1,6 @@
 using cpu_net.Model;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -137,10 +138,13 @@ namespace cpu_net.Services
                 ? "http://10.200.13.18:8899"
                 : apiBaseUrl.TrimEnd('/');
 
+            LoggingService.WriteTextLog($"[电费] 开始查询，学号={studentNo}", "Log", false);
+
             // 先检查服务器是否可达
             var (reachable, message) = await CheckServerReachableAsync(baseUrl);
             if (!reachable)
             {
+                LoggingService.WriteTextLog($"[电费] 服务器不可达: {message}", "Log", false);
                 return new ElectricityResult
                 {
                     Success = false,
@@ -172,8 +176,10 @@ namespace cpu_net.Services
                 }
             }
 
-            // API调用全部失败，尝试从页面HTML中提取
-            return await TryQueryFromPageAsync(baseUrl, studentNo);
+            // API调用全部失败，不再回退到网页解析（网页已改为DAS登录页，无法提取）
+            realResult.ErrorMessage = realResult.ErrorMessage ?? "所有API端点均无法获取电费数据";
+            LoggingService.WriteTextLog($"[电费] 查询失败: {realResult.ErrorMessage}", "Log", false);
+            return realResult;
         }
 
         /// <summary>
@@ -193,23 +199,45 @@ namespace cpu_net.Services
                     sign = sign
                 };
 
-                string jsonBody = System.Text.Json.JsonSerializer.Serialize(requestBody);
-                using var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                content.Headers.Add("Referer", "http://10.200.13.18:8899/h5/");
+                var request = new HttpRequestMessage(HttpMethod.Post, RealApiUrl);
+                request.Headers.TryAddWithoutValidation("Referer", "http://10.200.13.18:8899/h5/");
+                request.Headers.TryAddWithoutValidation("Origin", "http://10.200.13.18:8899");
+                var formData = new Dictionary<string, string>
+                {
+                    { "appId", AppId },
+                    { "openId", studentNo },
+                    { "stuNo", "true" },
+                    { "sign", sign }
+                };
+                request.Content = new FormUrlEncodedContent(formData);
 
-                using var response = await _httpClient.PostAsync(RealApiUrl, content);
+                using var response = await _httpClient.SendAsync(request);
                 string responseText = await response.Content.ReadAsStringAsync();
                 result.RawResponse = responseText;
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    result.ErrorMessage = $"API返回状态码: {(int)response.StatusCode}";
+                    int statusCode = (int)response.StatusCode;
+                    if (statusCode == 415)
+                    {
+                        var now = DateTime.Now;
+                        bool isMaintenance = now.Hour >= 23 || now.Hour < 8;
+                        if (isMaintenance)
+                        {
+                            result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                            LoggingService.WriteTextLog($"[电费] 真实API返回415，判断为服务器维护时段 ({now:HH:mm})", "Log", false);
+                            return result;
+                        }
+                    }
+                    result.ErrorMessage = $"API返回状态码: {statusCode}";
+                    LoggingService.WriteTextLog($"[电费] 真实API返回状态码异常: {statusCode}", "Log", false);
                     return result;
                 }
 
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
                     result.ErrorMessage = "API返回空响应";
+                    LoggingService.WriteTextLog("[电费] 真实API返回空响应", "Log", false);
                     return result;
                 }
 
@@ -218,16 +246,19 @@ namespace cpu_net.Services
             catch (HttpRequestException ex)
             {
                 result.ErrorMessage = $"请求异常: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 真实API请求异常: {ex.Message}", "Log", false);
                 return result;
             }
             catch (TaskCanceledException ex)
             {
                 result.ErrorMessage = $"请求超时: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 真实API请求超时: {ex.Message}", "Log", false);
                 return result;
             }
             catch (Exception ex)
             {
                 result.ErrorMessage = $"未知异常: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 真实API请求未知异常: {ex.Message}", "Log", false);
                 return result;
             }
         }
@@ -334,6 +365,7 @@ namespace cpu_net.Services
                     else
                     {
                         result.ErrorMessage = "API响应中未找到电费余额字段";
+                        LoggingService.WriteTextLog("[电费] API响应中未找到电费余额字段", "Log", false);
                     }
                 }
                 else
@@ -345,6 +377,7 @@ namespace cpu_net.Services
             catch (JsonException ex)
             {
                 result.ErrorMessage = $"JSON解析失败: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] API响应JSON解析失败: {ex.Message}", "Log", false);
             }
 
             return result;
@@ -374,16 +407,19 @@ namespace cpu_net.Services
             catch (HttpRequestException ex)
             {
                 result.ErrorMessage = $"请求异常: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 备用API请求异常: {ex.Message}", "Log", false);
                 return result;
             }
             catch (TaskCanceledException ex)
             {
                 result.ErrorMessage = $"请求超时: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 备用API请求超时: {ex.Message}", "Log", false);
                 return result;
             }
             catch (Exception ex)
             {
                 result.ErrorMessage = $"未知异常: {ex.Message}";
+                LoggingService.WriteTextLog($"[电费] 备用API请求未知异常: {ex.Message}", "Log", false);
                 return result;
             }
         }

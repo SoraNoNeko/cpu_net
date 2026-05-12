@@ -45,8 +45,18 @@ namespace cpu_net.Views.Controls
             };
         }
 
-        public void SaveSettings(SettingModel setting)
+        public bool SaveSettings(SettingModel setting)
         {
+            int hour = CheckHourComboBox.SelectedIndex >= 0 ? CheckHourComboBox.SelectedIndex : 8;
+            int minute = CheckMinuteComboBox.SelectedIndex >= 0 ? CheckMinuteComboBox.SelectedIndex * 5 : 0;
+
+            // 维护时段校验（23:00-08:00）
+            if (hour >= 23 || hour < 8)
+            {
+                MessageBox.Show("定时查询时间不能设置在服务器维护时段（23:00-08:00）", "Attention");
+                return false;
+            }
+
             setting.ElectricityEnabled = EnabledCheckBox.IsChecked ?? false;
             setting.ElectricityStudentNo = StudentNoTextBox.Text.Trim();
             setting.ElectricityThreshold = decimal.TryParse(ThresholdTextBox.Text, out var t) ? t : 10m;
@@ -56,8 +66,8 @@ namespace cpu_net.Views.Controls
                 1 => 1,
                 _ => 0
             };
-            setting.ElectricityCheckHour = CheckHourComboBox.SelectedIndex >= 0 ? CheckHourComboBox.SelectedIndex : 8;
-            setting.ElectricityCheckMinute = CheckMinuteComboBox.SelectedIndex >= 0 ? CheckMinuteComboBox.SelectedIndex * 5 : 0;
+            setting.ElectricityCheckHour = hour;
+            setting.ElectricityCheckMinute = minute;
             setting.NotifyType = NotifyTypeComboBox.SelectedIndex switch
             {
                 0 => 0,
@@ -65,6 +75,7 @@ namespace cpu_net.Views.Controls
                 2 => 2,
                 _ => 0
             };
+            return true;
         }
 
         private void NumberOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
