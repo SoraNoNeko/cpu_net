@@ -16,9 +16,12 @@ namespace cpu_net.Views.Controls
 
         public void LoadSettings(SettingModel setting)
         {
-            BgPathTextBox.Text = setting.BackgroundImagePath;
-            IconPathTextBox.Text = setting.CustomIconPath;
+            BgPathTextBox.Text = !string.IsNullOrWhiteSpace(setting.BackgroundImagePath) && File.Exists(setting.BackgroundImagePath)
+                ? setting.BackgroundImagePath : string.Empty;
+            IconPathTextBox.Text = !string.IsNullOrWhiteSpace(setting.CustomIconPath) && File.Exists(setting.CustomIconPath)
+                ? setting.CustomIconPath : string.Empty;
             OpacitySlider.Value = (int)(setting.BackgroundOpacity * 100);
+            TextBoxOpacitySlider.Value = (int)(setting.TextBoxOpacity * 100);
             UpdatePreview();
         }
 
@@ -27,6 +30,7 @@ namespace cpu_net.Views.Controls
             setting.BackgroundImagePath = BgPathTextBox.Text.Trim();
             setting.CustomIconPath = IconPathTextBox.Text.Trim();
             setting.BackgroundOpacity = OpacitySlider.Value / 100.0;
+            setting.TextBoxOpacity = TextBoxOpacitySlider.Value / 100.0;
         }
 
         private void BgBrowseButton_Click(object sender, RoutedEventArgs e)
@@ -74,6 +78,12 @@ namespace cpu_net.Views.Controls
             if (OpacityValueText != null)
                 OpacityValueText.Text = $"{(int)OpacitySlider.Value}%";
             UpdatePreview();
+        }
+
+        private void TextBoxOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (TextBoxOpacityValueText != null)
+                TextBoxOpacityValueText.Text = $"{(int)TextBoxOpacitySlider.Value}%";
         }
 
         private void UpdatePreview()

@@ -60,10 +60,6 @@
             </StackPanel>
         </Grid>
         
-        <TextBlock Grid.Row="2" Text="调试学号: 3325092263" FontSize="12" Foreground="Gray" Margin="0,10,0,0"/>
-        
-        <TextBlock Grid.Row="3" TextWrapping="Wrap" FontSize="12" Foreground="#666" Margin="0,10,0,0">
-            说明：系统会自动尝试多种API端点获取电费余额。如果查询失败，请检查学号是否正确，或前往能源管控平台确认账号状态。
-        </TextBlock>
+
     </Grid>
 </UserControl>

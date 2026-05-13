@@ -61,7 +61,7 @@
                 <ColumnDefinition Width="8*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <ScrollViewer  Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Name="sv1" Background="White">
+            <ScrollViewer  Grid.Column="1" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Name="sv1" Background="#CCFFFFFF">
                 <TextBox Name="textLog" AcceptsReturn="True" TextWrapping="Wrap" IsReadOnly="True" Text="{Binding TxtLog, Mode=OneWay}" TextChanged="textLog_TextChanged" SelectionBrush="{x:Null}" BorderBrush="{x:Null}"/>
             </ScrollViewer>
         </Grid>

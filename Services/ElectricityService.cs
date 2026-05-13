@@ -36,22 +36,14 @@ namespace cpu_net.Services
         public const string AppId = "XzJ0YzzEtk0HbVOk";
 
         /// <summary>
+        /// 判断当前是否处于服务器维护时段（23:00-08:00）
+        /// </summary>
+        private static bool IsMaintenanceTime() => DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 8;
+
+        /// <summary>
         /// 默认电费查询URL模板（备用）
         /// </summary>
         public const string DefaultQueryUrlTemplate = "http://10.200.13.18:8899/h5/#/?no={0}";
-
-        /// <summary>
-        /// 默认API端点猜测列表（备用）
-        /// </summary>
-        public static readonly string[] DefaultApiEndpoints = new[]
-        {
-            "/api/student/balance",
-            "/api/room/balance",
-            "/api/user/balance",
-            "/api/elec/balance",
-            "/api/query/balance",
-            "/api/account/balance",
-        };
 
         /// <summary>
         /// 生成请求签名（SHA1）
@@ -126,22 +118,13 @@ namespace cpu_net.Services
         /// 查询电费余额
         /// </summary>
         /// <param name="studentNo">学号</param>
-        /// <param name="apiBaseUrl">API基础地址（可选，默认http://10.200.13.18:8899）</param>
-        /// <param name="apiEndpoint">API端点路径（可选，自动探测）</param>
         /// <returns>查询结果</returns>
-        public async Task<ElectricityResult> QueryAsync(
-            string studentNo,
-            string? apiBaseUrl = null,
-            string? apiEndpoint = null)
+        public async Task<ElectricityResult> QueryAsync(string studentNo)
         {
-            string baseUrl = string.IsNullOrWhiteSpace(apiBaseUrl)
-                ? "http://10.200.13.18:8899"
-                : apiBaseUrl.TrimEnd('/');
-
             LoggingService.WriteTextLog($"[电费] 开始查询，学号={studentNo}", "Log", false);
 
             // 先检查服务器是否可达
-            var (reachable, message) = await CheckServerReachableAsync(baseUrl);
+            var (reachable, message) = await CheckServerReachableAsync();
             if (!reachable)
             {
                 LoggingService.WriteTextLog($"[电费] 服务器不可达: {message}", "Log", false);
@@ -153,32 +136,12 @@ namespace cpu_net.Services
                 };
             }
 
-            // 优先使用真实API
+            // 仅使用真实API，不再重试备用端点
             var realResult = await QueryRealApiAsync(studentNo);
-            if (realResult.Success || realResult.IsRoomNotBound)
+            if (!realResult.Success && !realResult.IsRoomNotBound)
             {
-                return realResult;
+                LoggingService.WriteTextLog($"[电费] 查询失败: {realResult.ErrorMessage}", "Log", false);
             }
-
-            // 如果指定了API端点，尝试直接调用
-            if (!string.IsNullOrWhiteSpace(apiEndpoint))
-            {
-                return await TryQueryApiAsync(baseUrl, apiEndpoint, studentNo);
-            }
-
-            // 尝试默认API端点列表
-            foreach (var endpoint in DefaultApiEndpoints)
-            {
-                var result = await TryQueryApiAsync(baseUrl, endpoint, studentNo);
-                if (result.Success || result.IsRoomNotBound)
-                {
-                    return result;
-                }
-            }
-
-            // API调用全部失败，不再回退到网页解析（网页已改为DAS登录页，无法提取）
-            realResult.ErrorMessage = realResult.ErrorMessage ?? "所有API端点均无法获取电费数据";
-            LoggingService.WriteTextLog($"[电费] 查询失败: {realResult.ErrorMessage}", "Log", false);
             return realResult;
         }
 
@@ -202,14 +165,8 @@ namespace cpu_net.Services
                 var request = new HttpRequestMessage(HttpMethod.Post, RealApiUrl);
                 request.Headers.TryAddWithoutValidation("Referer", "http://10.200.13.18:8899/h5/");
                 request.Headers.TryAddWithoutValidation("Origin", "http://10.200.13.18:8899");
-                var formData = new Dictionary<string, string>
-                {
-                    { "appId", AppId },
-                    { "openId", studentNo },
-                    { "stuNo", "true" },
-                    { "sign", sign }
-                };
-                request.Content = new FormUrlEncodedContent(formData);
+                string jsonBody = JsonSerializer.Serialize(requestBody);
+                request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
                 using var response = await _httpClient.SendAsync(request);
                 string responseText = await response.Content.ReadAsStringAsync();
@@ -218,16 +175,11 @@ namespace cpu_net.Services
                 if (!response.IsSuccessStatusCode)
                 {
                     int statusCode = (int)response.StatusCode;
-                    if (statusCode == 415)
+                    if (IsMaintenanceTime())
                     {
-                        var now = DateTime.Now;
-                        bool isMaintenance = now.Hour >= 23 || now.Hour < 8;
-                        if (isMaintenance)
-                        {
-                            result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
-                            LoggingService.WriteTextLog($"[电费] 真实API返回415，判断为服务器维护时段 ({now:HH:mm})", "Log", false);
-                            return result;
-                        }
+                        result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                        LoggingService.WriteTextLog($"[电费] 真实API返回{statusCode}，处于维护时段 ({DateTime.Now:HH:mm})", "Log", false);
+                        return result;
                     }
                     result.ErrorMessage = $"API返回状态码: {statusCode}";
                     LoggingService.WriteTextLog($"[电费] 真实API返回状态码异常: {statusCode}", "Log", false);
@@ -236,8 +188,15 @@ namespace cpu_net.Services
 
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
-                    result.ErrorMessage = "API返回空响应";
-                    LoggingService.WriteTextLog("[电费] 真实API返回空响应", "Log", false);
+                    if (IsMaintenanceTime())
+                    {
+                        result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                        LoggingService.WriteTextLog($"[电费] 真实API返回空响应，处于维护时段 ({DateTime.Now:HH:mm})", "Log", false);
+                        return result;
+                    }
+                    result.IsRoomNotBound = true;
+                    result.ErrorMessage = "未绑定房间（返回空响应）";
+                    LoggingService.WriteTextLog("[电费] 真实API返回空响应，判断为未绑定房间", "Log", false);
                     return result;
                 }
 
@@ -245,20 +204,44 @@ namespace cpu_net.Services
             }
             catch (HttpRequestException ex)
             {
-                result.ErrorMessage = $"请求异常: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 真实API请求异常: {ex.Message}", "Log", false);
+                if (IsMaintenanceTime())
+                {
+                    result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                    LoggingService.WriteTextLog($"[电费] 真实API请求异常，处于维护时段: {ex.Message}", "Log", false);
+                }
+                else
+                {
+                    result.ErrorMessage = $"请求异常: {ex.Message}";
+                    LoggingService.WriteTextLog($"[电费] 真实API请求异常: {ex.Message}", "Log", false);
+                }
                 return result;
             }
             catch (TaskCanceledException ex)
             {
-                result.ErrorMessage = $"请求超时: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 真实API请求超时: {ex.Message}", "Log", false);
+                if (IsMaintenanceTime())
+                {
+                    result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                    LoggingService.WriteTextLog($"[电费] 真实API请求超时，处于维护时段: {ex.Message}", "Log", false);
+                }
+                else
+                {
+                    result.ErrorMessage = $"请求超时: {ex.Message}";
+                    LoggingService.WriteTextLog($"[电费] 真实API请求超时: {ex.Message}", "Log", false);
+                }
                 return result;
             }
             catch (Exception ex)
             {
-                result.ErrorMessage = $"未知异常: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 真实API请求未知异常: {ex.Message}", "Log", false);
+                if (IsMaintenanceTime())
+                {
+                    result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                    LoggingService.WriteTextLog($"[电费] 真实API未知异常，处于维护时段: {ex.Message}", "Log", false);
+                }
+                else
+                {
+                    result.ErrorMessage = $"未知异常: {ex.Message}";
+                    LoggingService.WriteTextLog($"[电费] 真实API请求未知异常: {ex.Message}", "Log", false);
+                }
                 return result;
             }
         }
@@ -278,7 +261,12 @@ namespace cpu_net.Services
                     var array = doc.RootElement.EnumerateArray();
                     if (!array.MoveNext())
                     {
-                        // 空数组表示未绑定房间
+                        if (IsMaintenanceTime())
+                        {
+                            result.ErrorMessage = "服务器维护中（23:00-08:00），请稍后再试";
+                            LoggingService.WriteTextLog($"[电费] 真实API返回空数组，处于维护时段 ({DateTime.Now:HH:mm})", "Log", false);
+                            return result;
+                        }
                         result.IsRoomNotBound = true;
                         result.ErrorMessage = "未绑定房间（返回空数组）";
                         return result;
@@ -296,40 +284,43 @@ namespace cpu_net.Services
                         return result;
                     }
 
-                    // 提取房间信息
+                    // 提取房间信息（组合 buiName + name，例如 "E1 0404房间"）
+                    string? roomName = null;
+                    string? buiName = null;
                     if (first.TryGetProperty("name", out var nameProp))
-                    {
-                        result.RoomInfo = nameProp.GetString();
-                    }
+                        roomName = nameProp.GetString();
+                    if (first.TryGetProperty("buiName", out var buiNameProp))
+                        buiName = buiNameProp.GetString();
+                    result.RoomInfo = $"{buiName} {roomName}".Trim();
 
-                    // 提取电费余额（meters数组中的remain字段）和可用电量（amount字段）
+                    // 提取电费余额（meters数组中的amount字段）和可用电量（remain字段）
                     if (first.TryGetProperty("meters", out var metersProp) && metersProp.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var meter in metersProp.EnumerateArray())
                         {
-                            if (meter.TryGetProperty("remain", out var remainProp))
+                            if (meter.TryGetProperty("amount", out var amountProp))
                             {
-                                if (remainProp.ValueKind == JsonValueKind.Number)
+                                if (amountProp.ValueKind == JsonValueKind.Number)
                                 {
-                                    result.Balance = remainProp.GetDecimal();
+                                    result.Balance = amountProp.GetDecimal();
                                 }
-                                else if (remainProp.ValueKind == JsonValueKind.String)
+                                else if (amountProp.ValueKind == JsonValueKind.String)
                                 {
-                                    if (decimal.TryParse(remainProp.GetString(), out var d))
+                                    if (decimal.TryParse(amountProp.GetString(), out var d))
                                     {
                                         result.Balance = d;
                                     }
                                 }
                             }
-                            if (meter.TryGetProperty("amount", out var amountProp))
+                            if (meter.TryGetProperty("remain", out var remainProp))
                             {
-                                if (amountProp.ValueKind == JsonValueKind.Number)
+                                if (remainProp.ValueKind == JsonValueKind.Number)
                                 {
-                                    result.Degrees = amountProp.GetDecimal();
+                                    result.Degrees = remainProp.GetDecimal();
                                 }
-                                else if (amountProp.ValueKind == JsonValueKind.String)
+                                else if (remainProp.ValueKind == JsonValueKind.String)
                                 {
-                                    if (decimal.TryParse(amountProp.GetString(), out var d))
+                                    if (decimal.TryParse(remainProp.GetString(), out var d))
                                     {
                                         result.Degrees = d;
                                     }
@@ -343,15 +334,15 @@ namespace cpu_net.Services
                     }
 
                     // 备选：尝试直接从根对象读取
-                    if (!result.Balance.HasValue && first.TryGetProperty("remain", out var rootRemain))
+                    if (!result.Balance.HasValue && first.TryGetProperty("amount", out var rootAmount))
                     {
-                        if (rootRemain.ValueKind == JsonValueKind.Number)
+                        if (rootAmount.ValueKind == JsonValueKind.Number)
                         {
-                            result.Balance = rootRemain.GetDecimal();
+                            result.Balance = rootAmount.GetDecimal();
                         }
-                        else if (rootRemain.ValueKind == JsonValueKind.String)
+                        else if (rootAmount.ValueKind == JsonValueKind.String)
                         {
-                            if (decimal.TryParse(rootRemain.GetString(), out var d))
+                            if (decimal.TryParse(rootAmount.GetString(), out var d))
                             {
                                 result.Balance = d;
                             }
@@ -370,8 +361,9 @@ namespace cpu_net.Services
                 }
                 else
                 {
-                    // 可能是错误对象
-                    return ParseJsonResponse(json, result);
+                    // 非数组响应，视为异常
+                    result.ErrorMessage = "API返回非预期格式";
+                    LoggingService.WriteTextLog("[电费] API返回非数组格式", "Log", false);
                 }
             }
             catch (JsonException ex)
@@ -383,232 +375,6 @@ namespace cpu_net.Services
             return result;
         }
 
-        /// <summary>
-        /// 尝试通过API查询电费
-        /// </summary>
-        private async Task<ElectricityResult> TryQueryApiAsync(string baseUrl, string endpoint, string studentNo)
-        {
-            var result = new ElectricityResult();
-            try
-            {
-                string url = $"{baseUrl}{endpoint}?no={Uri.EscapeDataString(studentNo)}";
-                string response = await _httpClient.GetStringAsync(url);
-                result.RawResponse = response;
 
-                if (string.IsNullOrWhiteSpace(response))
-                {
-                    result.ErrorMessage = "API返回空响应";
-                    return result;
-                }
-
-                // 尝试解析JSON
-                return ParseJsonResponse(response, result);
-            }
-            catch (HttpRequestException ex)
-            {
-                result.ErrorMessage = $"请求异常: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 备用API请求异常: {ex.Message}", "Log", false);
-                return result;
-            }
-            catch (TaskCanceledException ex)
-            {
-                result.ErrorMessage = $"请求超时: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 备用API请求超时: {ex.Message}", "Log", false);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                result.ErrorMessage = $"未知异常: {ex.Message}";
-                LoggingService.WriteTextLog($"[电费] 备用API请求未知异常: {ex.Message}", "Log", false);
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// 尝试从页面HTML中提取电费信息
-        /// </summary>
-        private async Task<ElectricityResult> TryQueryFromPageAsync(string baseUrl, string studentNo)
-        {
-            var result = new ElectricityResult();
-            try
-            {
-                string pageUrl = string.Format(DefaultQueryUrlTemplate, Uri.EscapeDataString(studentNo));
-                string html = await _httpClient.GetStringAsync(pageUrl);
-                result.RawResponse = html;
-
-                if (string.IsNullOrWhiteSpace(html))
-                {
-                    result.ErrorMessage = "页面返回空内容";
-                    return result;
-                }
-
-                // 检测未绑定房间
-                string[] notBoundKeywords = new[]
-                {
-                    "未绑定", "请先绑定", "绑定房间", "未关联", "no room", "not bound"
-                };
-
-                foreach (var keyword in notBoundKeywords)
-                {
-                    if (html.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                    {
-                        result.IsRoomNotBound = true;
-                        result.ErrorMessage = "检测到未绑定房间";
-                        return result;
-                    }
-                }
-
-                // 尝试从HTML中提取余额（多种正则模式）
-                result.Balance = ExtractBalanceFromHtml(html);
-                if (result.Balance.HasValue)
-                {
-                    result.Success = true;
-                }
-                else
-                {
-                    result.ErrorMessage = "无法从页面中提取电费余额";
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                result.ErrorMessage = $"页面解析异常: {ex.Message}";
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// 解析JSON响应
-        /// </summary>
-        private ElectricityResult ParseJsonResponse(string json, ElectricityResult result)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                // 检测错误码/未绑定
-                if (root.TryGetProperty("code", out var codeProp))
-                {
-                    int code = codeProp.GetInt32();
-                    if (code != 0 && code != 200)
-                    {
-                        string msg = root.TryGetProperty("message", out var msgProp)
-                            ? msgProp.GetString() ?? "未知错误"
-                            : "未知错误";
-
-                        if (msg.Contains("绑定", StringComparison.OrdinalIgnoreCase) ||
-                            msg.Contains("房间", StringComparison.OrdinalIgnoreCase))
-                        {
-                            result.IsRoomNotBound = true;
-                        }
-
-                        result.ErrorMessage = msg;
-                        return result;
-                    }
-                }
-
-                // 尝试多种余额字段名
-                string[] balanceFields = new[] { "balance", "amount", "money", "elecBalance", "remain", "surplus", "fee" };
-                decimal? balance = null;
-
-                foreach (var field in balanceFields)
-                {
-                    if (root.TryGetProperty(field, out var prop))
-                    {
-                        if (prop.ValueKind == JsonValueKind.Number)
-                        {
-                            balance = prop.GetDecimal();
-                            break;
-                        }
-                        else if (prop.ValueKind == JsonValueKind.String)
-                        {
-                            if (decimal.TryParse(prop.GetString(), out var d))
-                            {
-                                balance = d;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // 如果根没有，尝试在 data 字段中查找
-                if (!balance.HasValue && root.TryGetProperty("data", out var dataProp))
-                {
-                    foreach (var field in balanceFields)
-                    {
-                        if (dataProp.TryGetProperty(field, out var prop))
-                        {
-                            if (prop.ValueKind == JsonValueKind.Number)
-                            {
-                                balance = prop.GetDecimal();
-                                break;
-                            }
-                            else if (prop.ValueKind == JsonValueKind.String)
-                            {
-                                if (decimal.TryParse(prop.GetString(), out var d))
-                                {
-                                    balance = d;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // 尝试获取房间信息
-                    if (dataProp.TryGetProperty("roomName", out var roomProp) ||
-                        dataProp.TryGetProperty("room", out roomProp) ||
-                        dataProp.TryGetProperty("roomInfo", out roomProp))
-                    {
-                        result.RoomInfo = roomProp.GetString();
-                    }
-                }
-
-                if (balance.HasValue)
-                {
-                    result.Balance = balance;
-                    result.Success = true;
-                }
-                else
-                {
-                    result.ErrorMessage = "JSON中未找到余额字段";
-                }
-            }
-            catch (JsonException ex)
-            {
-                result.ErrorMessage = $"JSON解析失败: {ex.Message}";
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// 从HTML中提取余额
-        /// </summary>
-        private decimal? ExtractBalanceFromHtml(string html)
-        {
-            // 模式1: xxx元
-            var match = Regex.Match(html, @"余额\s*[：:]\s*([0-9]+\.?[0-9]*)\s*元");
-            if (match.Success && decimal.TryParse(match.Groups[1].Value, out var d1))
-                return d1;
-
-            // 模式2: 金额数字
-            match = Regex.Match(html, @"电费\s*[：:]\s*([0-9]+\.?[0-9]*)");
-            if (match.Success && decimal.TryParse(match.Groups[1].Value, out var d2))
-                return d2;
-
-            // 模式3: balance相关
-            match = Regex.Match(html, @"balance['""\s]*[:=]\s*['""]?([0-9]+\.?[0-9]*)");
-            if (match.Success && decimal.TryParse(match.Groups[1].Value, out var d3))
-                return d3;
-
-            // 模式4: 通用金额模式（在中文上下文中）
-            match = Regex.Match(html, @"([0-9]+\.[0-9]{1,2})\s*元");
-            if (match.Success && decimal.TryParse(match.Groups[1].Value, out var d4))
-                return d4;
-
-            return null;
-        }
     }
 }

@@ -7,6 +7,13 @@
              xmlns:tb="http://www.hardcodet.net/taskbar"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <SolidColorBrush x:Key="TextBoxBackgroundBrush" Color="#CCFFFFFF"/>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}"/>
+        </Style>
+        <Style TargetType="PasswordBox">
+            <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}"/>
+        </Style>
         <ContextMenu x:Shared="false" x:Key="SysTrayMenu">
             <MenuItem Header="显示窗口" Command="{Binding ShowWindowCommand}" />
             <MenuItem Header="关闭窗口" Command="{Binding HideWindowCommand}" />

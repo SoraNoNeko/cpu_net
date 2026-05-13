@@ -43,6 +43,7 @@ namespace cpu_net.ViewModel
                 BackgroundImagePath = _settingData.BackgroundImagePath;
                 BackgroundOpacity = _settingData.BackgroundOpacity;
                 CustomIconPath = _settingData.CustomIconPath;
+                TextBoxOpacity = _settingData.TextBoxOpacity;
             }
         }
 
@@ -270,6 +271,13 @@ namespace cpu_net.ViewModel
         {
             get => _customIconPath;
             set { _customIconPath = value; OnPropertyChanged(); }
+        }
+
+        private double _textBoxOpacity;
+        public double TextBoxOpacity
+        {
+            get => _textBoxOpacity;
+            set { _textBoxOpacity = value; OnPropertyChanged(); }
         }
 
         #endregion

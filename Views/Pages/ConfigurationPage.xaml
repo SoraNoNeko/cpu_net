@@ -20,7 +20,7 @@
         </Grid.ColumnDefinitions>
         
         <!-- 左侧菜单 -->
-        <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Background="#F5F5F5">
+        <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Background="#CCF5F5F5">
             <ListBox x:Name="MenuListBox" BorderThickness="0" Background="Transparent">
                 <ListBoxItem Content="网络设置" Tag="network" IsSelected="True" Padding="15,10" FontSize="14"/>
                 <ListBoxItem Content="电费设置" Tag="electricity" Padding="15,10" FontSize="14"/>
@@ -56,7 +56,7 @@
                         
                         <!-- 账户信息 -->
                         <Border Grid.Row="2" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="15" Margin="0,0,0,15"
-                                Background="White">
+                                Background="#CCFFFFFF">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>

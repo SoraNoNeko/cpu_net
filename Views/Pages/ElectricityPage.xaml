@@ -33,7 +33,7 @@
             
             <!-- 状态卡片 -->
             <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,15"
-                    Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                    Background="#CCFFFFFF">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -72,7 +72,10 @@
             </Border>
             
             <!-- 错误提示 -->
-            <TextBlock Grid.Row="2" x:Name="ErrorTipText" Text="" FontSize="12" Foreground="OrangeRed" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,10" Visibility="Collapsed"/>
+            <TextBlock Grid.Row="2" x:Name="ErrorTipText" Text="" FontSize="12" Foreground="OrangeRed" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,5" Visibility="Collapsed"/>
+            <Button Grid.Row="2" x:Name="OpenWebButton" Content="前往网站查看状态" FontSize="12" Padding="8,3" 
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10" 
+                    Visibility="Collapsed" Click="OpenWebButton_Click"/>
             
             <!-- 操作按钮 -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
@@ -94,8 +97,8 @@
                 <TextBlock Text="查询日志" FontSize="14" FontWeight="Bold" Margin="0,0,0,5"/>
                 <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <TextBox x:Name="LogTextBox" IsReadOnly="True" TextWrapping="Wrap" 
-                                 BorderThickness="0" Padding="8" Background="Transparent"
+                        <TextBox x:Name="LogTextBox" IsReadOnly="True" TextWrapping="Wrap"
+                                 BorderThickness="0" Padding="8"
                                  FontSize="12" FontFamily="Consolas"/>
                     </ScrollViewer>
                 </Border>

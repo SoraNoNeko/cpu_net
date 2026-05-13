@@ -26,6 +26,20 @@ namespace cpu_net
 
         private static readonly Brush DarkBlueBrush = new SolidColorBrush(Colors.DarkBlue);
         private static readonly Brush WhiteBrush = new SolidColorBrush(Colors.White);
+        private static readonly System.Windows.Media.Imaging.BitmapImage? DefaultIcon = LoadDefaultIcon();
+
+        private static System.Windows.Media.Imaging.BitmapImage? LoadDefaultIcon()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "shinnku.ico");
+                if (!System.IO.File.Exists(path)) return null;
+                var icon = new System.Windows.Media.Imaging.BitmapImage(new Uri(path, UriKind.Absolute));
+                icon.Freeze();
+                return icon;
+            }
+            catch { return null; }
+        }
 
         private HomePage _cachedHomePage = new HomePage();
         private ConfigurationPage _cachedConfigurationPage = new ConfigurationPage();
@@ -114,18 +128,21 @@ namespace cpu_net
             setting = setting.Read();
 
             // 应用背景
-            if (!string.IsNullOrWhiteSpace(setting.BackgroundImagePath))
+            var brush = ImageProcessingService.CreateBackgroundBrush(setting.BackgroundImagePath, setting.BackgroundOpacity);
+            if (brush != null)
             {
-                var brush = ImageProcessingService.CreateBackgroundBrush(setting.BackgroundImagePath, setting.BackgroundOpacity);
-                if (brush != null)
-                {
-                    MainGrid.Background = brush;
-                }
+                MainGrid.Background = brush;
             }
             else
             {
                 MainGrid.Background = new SolidColorBrush(Colors.White);
             }
+
+            // 应用文本框透明度
+            byte alpha = (byte)(255 * Math.Clamp(setting.TextBoxOpacity, 0.0, 1.0));
+            var textBoxBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(alpha, 255, 255, 255));
+            textBoxBrush.Freeze();
+            System.Windows.Application.Current.Resources["TextBoxBackgroundBrush"] = textBoxBrush;
 
             // 应用图标
             if (!string.IsNullOrWhiteSpace(setting.CustomIconPath) && System.IO.File.Exists(setting.CustomIconPath))
@@ -135,7 +152,14 @@ namespace cpu_net
                     var iconUri = new Uri(setting.CustomIconPath, UriKind.Absolute);
                     this.Icon = new System.Windows.Media.Imaging.BitmapImage(iconUri);
                 }
-                catch { }
+                catch
+                {
+                    this.Icon = DefaultIcon;
+                }
+            }
+            else
+            {
+                this.Icon = DefaultIcon;
             }
         }
 

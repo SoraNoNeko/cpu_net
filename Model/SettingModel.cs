@@ -56,6 +56,7 @@ namespace cpu_net.Model
         private string? _backgroundImagePath;
         private double? _backgroundOpacity;
         private string? _customIconPath;
+        private double? _textBoxOpacity;
 
         public bool PathExist() => File.Exists(_settingDataPath);
 
@@ -283,6 +284,12 @@ namespace cpu_net.Model
             set => SetProperty(ref _customIconPath, value);
         }
 
+        public double TextBoxOpacity
+        {
+            get => _textBoxOpacity ?? 0.8;
+            set => SetProperty(ref _textBoxOpacity, value);
+        }
+
         #endregion
 
         public SettingModel Read()
@@ -346,6 +353,7 @@ namespace cpu_net.Model
                 BackgroundImagePath = BackgroundImagePath,
                 BackgroundOpacity = BackgroundOpacity,
                 CustomIconPath = CustomIconPath,
+                TextBoxOpacity = TextBoxOpacity,
             };
 
             // 若配置已存在，保留原有配置中未在本次内存中修改的字段
@@ -388,6 +396,7 @@ namespace cpu_net.Model
                 userSettingData.BackgroundImagePath = string.IsNullOrWhiteSpace(userSettingData.BackgroundImagePath) ? data.BackgroundImagePath : userSettingData.BackgroundImagePath;
                 userSettingData.BackgroundOpacity = userSettingData.BackgroundOpacity == 0 ? data.BackgroundOpacity : userSettingData.BackgroundOpacity;
                 userSettingData.CustomIconPath = string.IsNullOrWhiteSpace(userSettingData.CustomIconPath) ? data.CustomIconPath : userSettingData.CustomIconPath;
+                userSettingData.TextBoxOpacity = userSettingData.TextBoxOpacity == 0 ? data.TextBoxOpacity : userSettingData.TextBoxOpacity;
             }
 
             var serializer = new SerializerBuilder()

@@ -1,6 +1,7 @@
 using cpu_net.Model;
 using cpu_net.Services;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -210,12 +211,22 @@ namespace cpu_net.Views.Pages
         {
             ErrorTipText.Text = message;
             ErrorTipText.Visibility = Visibility.Visible;
+            OpenWebButton.Visibility = Visibility.Visible;
         }
 
         private void ClearErrorTip()
         {
             ErrorTipText.Text = "";
             ErrorTipText.Visibility = Visibility.Collapsed;
+            OpenWebButton.Visibility = Visibility.Collapsed;
+        }
+
+        private void OpenWebButton_Click(object sender, RoutedEventArgs e)
+        {
+            var setting = _settingData.Read();
+            string studentNo = setting.ElectricityStudentNo;
+            string url = $"http://10.200.13.18:8899/h5/#/?no={System.Uri.EscapeDataString(studentNo)}";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
         }
 
         private void AppendLog(string message)
