@@ -14,18 +14,24 @@ namespace cpu_net.Services
         private static readonly SemaphoreSlim LogSemaphore = new SemaphoreSlim(1, 1);
 
         /// <summary>
+        /// 日志根目录，固定为应用程序所在目录，避免相对路径导致写入系统目录的风险
+        /// </summary>
+        private static readonly string LogBaseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        /// <summary>
         /// 写入异常日志到 ErrorLog 目录（按天分文件）
         /// </summary>
         public static void WriteErrorLog(Exception ex)
         {
-            if (!Directory.Exists("ErrorLog"))
+            string errorLogDir = Path.Combine(LogBaseDir, "ErrorLog");
+            if (!Directory.Exists(errorLogDir))
             {
-                Directory.CreateDirectory("ErrorLog");
+                Directory.CreateDirectory(errorLogDir);
             }
 
             var now = DateTime.Now;
             string fileName = $"{now.Year}{now.Month:D2}{now.Day:D2}.log";
-            string logPath = Path.Combine("ErrorLog", fileName);
+            string logPath = Path.Combine(errorLogDir, fileName);
 
             var log = Environment.NewLine + "----------------------" + DateTime.Now + " --------------------------" + Environment.NewLine
                       + ex.Message
@@ -64,9 +70,10 @@ namespace cpu_net.Services
                 return;
             }
 
-            if (!Directory.Exists(logName))
+            string logDir = Path.Combine(LogBaseDir, logName);
+            if (!Directory.Exists(logDir))
             {
-                Directory.CreateDirectory(logName);
+                Directory.CreateDirectory(logDir);
             }
 
             var now = DateTime.Now;
@@ -74,7 +81,7 @@ namespace cpu_net.Services
                 ? $"{now.Year}{now.Month:D2}{now.Day:D2}.log"
                 : $"{now.Year}{now.Month:D2}.log";
 
-            string logPath = Path.Combine(logName, fileName);
+            string logPath = Path.Combine(logDir, fileName);
             var formattedLog = $"{DateTime.Now:M-d HH:mm:ss}  {log}{Environment.NewLine}";
 
             await LogSemaphore.WaitAsync();
@@ -97,7 +104,7 @@ namespace cpu_net.Services
             string fileName = logName == "RecordLog"
                 ? $"{now.Year}{now.Month:D2}{now.Day:D2}.log"
                 : $"{now.Year}{now.Month:D2}.log";
-            string logPath = Path.Combine(logName, fileName);
+            string logPath = Path.Combine(LogBaseDir, logName, fileName);
 
             if (!File.Exists(logPath))
             {
