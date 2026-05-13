@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace cpu_net.Views.Pages
@@ -23,6 +24,7 @@ namespace cpu_net.Views.Pages
             LoadSettingsToUi(new SettingModel(), isReset: true);
 
             MenuListBox.SelectionChanged += MenuListBox_SelectionChanged;
+            MenuListBox.PreviewMouseLeftButtonDown += MenuListBox_PreviewMouseLeftButtonDown;
             ContentScrollViewer.ScrollChanged += ContentScrollViewer_ScrollChanged;
         }
 
@@ -114,6 +116,14 @@ namespace cpu_net.Views.Pages
             MessageBox.Show("保存成功", "Info");
         }
 
+        private void MenuListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (FindParent<ListBoxItem>(e.OriginalSource as DependencyObject) is ListBoxItem item && item.IsSelected)
+            {
+                e.Handled = true;
+            }
+        }
+
         private void MenuListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 由滚动联动触发的选中变更不应再执行滚动，避免循环重置
@@ -149,7 +159,7 @@ namespace cpu_net.Views.Pages
             try
             {
                 var point = target.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
-                ContentScrollViewer.ScrollToVerticalOffset(point.Y);
+                ContentScrollViewer.ScrollToVerticalOffset(ContentScrollViewer.VerticalOffset + point.Y);
             }
             catch (InvalidOperationException)
             {
@@ -157,7 +167,7 @@ namespace cpu_net.Views.Pages
             }
             finally
             {
-                _isScrollingFromMenu = false;
+                Dispatcher.BeginInvoke(() => _isScrollingFromMenu = false, DispatcherPriority.Background);
             }
         }
 
@@ -165,8 +175,6 @@ namespace cpu_net.Views.Pages
         {
             if (_isScrollingFromMenu) return;
             if (ContentScrollViewer == null) return;
-
-            double viewportHeight = ContentScrollViewer.ViewportHeight;
 
             var sections = new (FrameworkElement? Element, int Index)[]
             {
@@ -177,23 +185,33 @@ namespace cpu_net.Views.Pages
                 (AboutPanel, 4)
             };
 
-            int bestIndex = 0;
-            double bestVisibility = double.MinValue;
-
-            foreach (var (element, index) in sections)
+            // 底部边界处理：当滚动到最底部时，强制选中最后一个标签
+            if (ContentScrollViewer.ScrollableHeight > 0 &&
+                ContentScrollViewer.VerticalOffset >= ContentScrollViewer.ScrollableHeight - 0.5)
             {
+                int lastIndex = sections.Length - 1;
+                if (MenuListBox.SelectedIndex != lastIndex)
+                {
+                    _isScrollingFromMenu = true;
+                    MenuListBox.SelectedIndex = lastIndex;
+                    Dispatcher.BeginInvoke(() => _isScrollingFromMenu = false, DispatcherPriority.Background);
+                }
+                return;
+            }
+
+            // 顶部阈值算法：从后往前找到第一个顶部在判定线以上的面板
+            double threshold = 40;
+            int bestIndex = 0;
+
+            for (int i = sections.Length - 1; i >= 0; i--)
+            {
+                var (element, index) = sections[i];
                 if (element == null) continue;
                 var point = element.TransformToVisual(ContentScrollViewer).Transform(new Point(0, 0));
-                double elementTop = point.Y;
-                double elementBottom = elementTop + element.ActualHeight;
-                double visibleTop = Math.Max(elementTop, 0);
-                double visibleBottom = Math.Min(elementBottom, viewportHeight);
-                double visibility = Math.Max(0, visibleBottom - visibleTop);
-
-                if (visibility > bestVisibility)
+                if (point.Y <= threshold)
                 {
-                    bestVisibility = visibility;
                     bestIndex = index;
+                    break;
                 }
             }
 
@@ -201,11 +219,21 @@ namespace cpu_net.Views.Pages
             {
                 _isScrollingFromMenu = true;
                 MenuListBox.SelectedIndex = bestIndex;
-                _isScrollingFromMenu = false;
+                Dispatcher.BeginInvoke(() => _isScrollingFromMenu = false, DispatcherPriority.Background);
             }
         }
 
         #region 辅助方法
+
+        private static T? FindParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T parent) return parent;
+                child = VisualTreeHelper.GetParent(child);
+            }
+            return null;
+        }
 
         private void LoadSettingsToUi(SettingModel data, bool isReset)
         {
