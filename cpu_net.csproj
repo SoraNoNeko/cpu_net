@@ -1,73 +1,71 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
-    <PackageIcon>shinnku.jpg</PackageIcon>
+    <PackageIcon>assets\shinnku.jpg</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <ApplicationIcon>shinnku.ico</ApplicationIcon>
+    <ApplicationIcon>assets\shinnku.ico</ApplicationIcon>
     <Authors>真红@FrostNova-sora</Authors>
     <Title>CPU_NET</Title>
+    <StartupObject>cpu_net.Program</StartupObject>
     <BaseOutputPath>D:\py\cpu_net\workingspace\bin</BaseOutputPath>
     <BaseIntermediateOutputPath>D:\py\cpu_net\workingspace\obj</BaseIntermediateOutputPath>
     <IsPublishable>True</IsPublishable>
-    <Version>4.0.3</Version>
-    <AssemblyVersion>4.0.3</AssemblyVersion>
-    <FileVersion>4.0.3</FileVersion>
+    <Version>4.1.0</Version>
+    <AssemblyVersion>4.1.0</AssemblyVersion>
+    <FileVersion>4.1.0</FileVersion>
     <IncludeSymbols>False</IncludeSymbols>
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
     <DebugType>none</DebugType>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>none</DebugType>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="obj\**" />
+    <Compile Remove="uninstaller\**" />
+    <Compile Remove="SetupBootstrapper\**" />
     <EmbeddedResource Remove="obj\**" />
+    <EmbeddedResource Remove="uninstaller\**" />
+    <EmbeddedResource Remove="SetupBootstrapper\**" />
     <None Remove="obj\**" />
+    <None Remove="uninstaller\**" />
+    <None Remove="SetupBootstrapper\**" />
     <Page Remove="obj\**" />
+    <Page Remove="uninstaller\**" />
+    <Page Remove="SetupBootstrapper\**" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Remove="shinnku.jpg" />
+    <None Remove="assets\shinnku.jpg" />
   </ItemGroup>
-
-
-
   <ItemGroup>
-    <Resource Include="shinnku.jpg">
+    <Resource Include="assets\shinnku.jpg">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
-
   <ItemGroup>
-    <Resource Include="shinnku.ico">
+    <Resource Include="assets\shinnku.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.0" />
     <PackageReference Include="MailKit" Version="4.16.0" />
-
     <PackageReference Include="Prism.Core" Version="9.0.537" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
     <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -75,7 +73,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -86,5 +83,4 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
 </Project>
