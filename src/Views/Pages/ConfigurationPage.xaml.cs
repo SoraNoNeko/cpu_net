@@ -46,6 +46,18 @@ namespace cpu_net.Views.Pages
             Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
         }
 
+        private void ProxyEnabledCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateProxySettingsEnabled();
+        }
+
+        private void UpdateProxySettingsEnabled()
+        {
+            bool enabled = ProxyEnabledCheckBox.IsChecked == true;
+            ProxySettingsBorder.IsEnabled = enabled;
+            ProxySettingsBorder.Opacity = enabled ? 1.0 : 0.5;
+        }
+
         private void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
         {
             _ = UpdateService.CheckAndPromptUpdateAsync(Window.GetWindow(this));
@@ -108,6 +120,14 @@ namespace cpu_net.Views.Pages
 
             // 保存背景设置
             BackgroundSettings.SaveSettings(_settingData);
+
+            // 保存代理设置
+            _settingData.UpdateProxyEnabled = ProxyEnabledCheckBox.IsChecked ?? false;
+            _settingData.UpdateProxyType = ProxyTypeComboBox.SelectedItem is ComboBoxItem item ? item.Tag?.ToString() ?? "HTTP" : "HTTP";
+            _settingData.UpdateProxyHost = ProxyHostTextBox.Text?.Trim() ?? string.Empty;
+            _settingData.UpdateProxyPort = int.TryParse(ProxyPortTextBox.Text, out int proxyPort) ? proxyPort : 0;
+            _settingData.UpdateProxyUsername = ProxyUsernameTextBox.Text?.Trim() ?? string.Empty;
+            _settingData.UpdateProxyPassword = ProxyPasswordBox.Password ?? string.Empty;
 
             _settingData.Save();
 
@@ -278,6 +298,21 @@ namespace cpu_net.Views.Pages
 
             // 背景设置
             BackgroundSettings.LoadSettings(data);
+
+            // 代理设置
+            ProxyEnabledCheckBox.IsChecked = hasConfig && data.UpdateProxyEnabled;
+            ProxyTypeComboBox.SelectedIndex = hasConfig ? data.UpdateProxyType?.ToUpperInvariant() switch
+            {
+                "SOCKS5" => 1,
+                "SOCKS4" => 2,
+                _ => 0
+            } : 0;
+            ProxyHostTextBox.Text = hasConfig ? data.UpdateProxyHost : string.Empty;
+            ProxyPortTextBox.Text = hasConfig && data.UpdateProxyPort > 0 ? data.UpdateProxyPort.ToString() : string.Empty;
+            ProxyUsernameTextBox.Text = hasConfig ? data.UpdateProxyUsername : string.Empty;
+            ProxyPasswordBox.Password = hasConfig ? data.UpdateProxyPassword : string.Empty;
+
+            UpdateProxySettingsEnabled();
         }
 
         private void ApplyModeRadio(int mode)

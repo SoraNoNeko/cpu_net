@@ -58,6 +58,14 @@ namespace cpu_net.Model
         private string? _customIconPath;
         private double? _textBoxOpacity;
 
+        // 更新代理设置
+        private bool? _updateProxyEnabled;
+        private string? _updateProxyType; // HTTP, SOCKS5, SOCKS4
+        private string? _updateProxyHost;
+        private int? _updateProxyPort;
+        private string? _updateProxyUsername;
+        private string? _updateProxyPassword;
+
         public bool PathExist() => File.Exists(_settingDataPath);
 
         public string Username
@@ -290,6 +298,42 @@ namespace cpu_net.Model
             set => SetProperty(ref _textBoxOpacity, value);
         }
 
+        public bool UpdateProxyEnabled
+        {
+            get => _updateProxyEnabled ?? false;
+            set => SetProperty(ref _updateProxyEnabled, value);
+        }
+
+        public string UpdateProxyType
+        {
+            get => _updateProxyType ?? "HTTP";
+            set => SetProperty(ref _updateProxyType, value);
+        }
+
+        public string UpdateProxyHost
+        {
+            get => _updateProxyHost ?? string.Empty;
+            set => SetProperty(ref _updateProxyHost, value);
+        }
+
+        public int UpdateProxyPort
+        {
+            get => _updateProxyPort ?? 0;
+            set => SetProperty(ref _updateProxyPort, value);
+        }
+
+        public string UpdateProxyUsername
+        {
+            get => _updateProxyUsername ?? string.Empty;
+            set => SetProperty(ref _updateProxyUsername, value);
+        }
+
+        public string UpdateProxyPassword
+        {
+            get => _updateProxyPassword ?? string.Empty;
+            set => SetProperty(ref _updateProxyPassword, value);
+        }
+
         #endregion
 
         public SettingModel Read()
@@ -354,6 +398,12 @@ namespace cpu_net.Model
                 BackgroundOpacity = BackgroundOpacity,
                 CustomIconPath = CustomIconPath,
                 TextBoxOpacity = TextBoxOpacity,
+                UpdateProxyEnabled = UpdateProxyEnabled,
+                UpdateProxyType = UpdateProxyType,
+                UpdateProxyHost = UpdateProxyHost,
+                UpdateProxyPort = UpdateProxyPort,
+                UpdateProxyUsername = UpdateProxyUsername,
+                UpdateProxyPassword = UpdateProxyPassword,
             };
 
             // 若配置已存在，保留原有配置中未在本次内存中修改的字段
@@ -397,6 +447,12 @@ namespace cpu_net.Model
                 userSettingData.BackgroundOpacity = userSettingData.BackgroundOpacity == 0 ? data.BackgroundOpacity : userSettingData.BackgroundOpacity;
                 userSettingData.CustomIconPath = string.IsNullOrWhiteSpace(userSettingData.CustomIconPath) ? data.CustomIconPath : userSettingData.CustomIconPath;
                 userSettingData.TextBoxOpacity = userSettingData.TextBoxOpacity == 0 ? data.TextBoxOpacity : userSettingData.TextBoxOpacity;
+                userSettingData.UpdateProxyEnabled = userSettingData.UpdateProxyEnabled || data.UpdateProxyEnabled;
+                userSettingData.UpdateProxyType = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyType) ? data.UpdateProxyType : userSettingData.UpdateProxyType;
+                userSettingData.UpdateProxyHost = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyHost) ? data.UpdateProxyHost : userSettingData.UpdateProxyHost;
+                userSettingData.UpdateProxyPort = userSettingData.UpdateProxyPort == 0 ? data.UpdateProxyPort : userSettingData.UpdateProxyPort;
+                userSettingData.UpdateProxyUsername = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyUsername) ? data.UpdateProxyUsername : userSettingData.UpdateProxyUsername;
+                userSettingData.UpdateProxyPassword = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyPassword) ? data.UpdateProxyPassword : userSettingData.UpdateProxyPassword;
             }
 
             var serializer = new SerializerBuilder()

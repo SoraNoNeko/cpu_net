@@ -26,6 +26,7 @@
                 <ListBoxItem Content="电费设置" Tag="electricity" Padding="15,10" FontSize="14"/>
                 <ListBoxItem Content="邮件设置" Tag="email" Padding="15,10" FontSize="14"/>
                 <ListBoxItem Content="背景与图标" Tag="background" Padding="15,10" FontSize="14"/>
+                <ListBoxItem Content="代理设置" Tag="proxy" Padding="15,10" FontSize="14"/>
                 <ListBoxItem Content="关于" Tag="about" Padding="15,10" FontSize="14"/>
             </ListBox>
         </Border>
@@ -151,6 +152,66 @@
                     
                     <!-- 背景设置面板 -->
                     <controls:BackgroundSettingsControl x:Name="BackgroundSettings" Margin="0,40,0,0"/>
+                    
+                    <!-- 代理设置面板 -->
+                    <Grid x:Name="ProxyPanel" Margin="0,40,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="代理设置" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+                        
+                        <CheckBox Grid.Row="1" Name="ProxyEnabledCheckBox" Content="启用更新代理" FontSize="14" Margin="0,0,0,15"
+                                  Checked="ProxyEnabledCheckBox_Changed" Unchecked="ProxyEnabledCheckBox_Changed"/>
+                        
+                        <Border Grid.Row="2" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="6" Padding="15"
+                                Background="#CCFFFFFF" x:Name="ProxySettingsBorder">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="250"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="代理类型:" FontSize="14" VerticalAlignment="Center" Margin="0,5"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" Name="ProxyTypeComboBox" FontSize="14" Padding="3" Margin="0,5">
+                                    <ComboBoxItem Content="HTTP" Tag="HTTP"/>
+                                    <ComboBoxItem Content="SOCKS5" Tag="SOCKS5"/>
+                                    <ComboBoxItem Content="SOCKS4" Tag="SOCKS4"/>
+                                </ComboBox>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="服务器:" FontSize="14" VerticalAlignment="Center" Margin="0,5"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Name="ProxyHostTextBox" FontSize="14" Padding="3" Margin="0,5"
+                                         ToolTip="代理服务器地址，如 127.0.0.1"/>
+                                
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="端口:" FontSize="14" VerticalAlignment="Center" Margin="0,5"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Name="ProxyPortTextBox" FontSize="14" Padding="3" Margin="0,5"
+                                         PreviewTextInput="Code_PreviewTextInput" InputMethod.IsInputMethodEnabled="False"
+                                         ToolTip="代理服务器端口，如 8080 或 1080"/>
+                                
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="用户名:" FontSize="14" VerticalAlignment="Center" Margin="0,5"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Name="ProxyUsernameTextBox" FontSize="14" Padding="3" Margin="0,5"
+                                         ToolTip="留空表示不认证"/>
+                                
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="密码:" FontSize="14" VerticalAlignment="Center" Margin="0,5"/>
+                                <PasswordBox Grid.Row="4" Grid.Column="1" Name="ProxyPasswordBox" FontSize="14" Padding="3" Margin="0,5"
+                                             ToolTip="留空表示不认证"/>
+                                
+                                <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" TextWrapping="Wrap" FontSize="12" Foreground="#666" Margin="0,10,0,0">
+                                    HTTP 代理直接支持。SOCKS 代理需系统支持或配合外部工具使用。
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                    </Grid>
                     
                     <!-- 关于面板 -->
                     <Grid x:Name="AboutPanel" Margin="0,40,0,0">
