@@ -32,7 +32,7 @@ namespace cpu_net
         {
             try
             {
-                string path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "shinnku.ico");
+                string path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "assets/shinnku.ico");
                 if (!System.IO.File.Exists(path)) return null;
                 var icon = new System.Windows.Media.Imaging.BitmapImage(new Uri(path, UriKind.Absolute));
                 icon.Freeze();

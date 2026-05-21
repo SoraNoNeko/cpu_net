@@ -1,5 +1,6 @@
 ﻿using cpu_net.Model;
 using cpu_net.Services;
+using cpu_net.ViewModel;
 using Hardcodet.Wpf.TaskbarNotification;
 using System;
 using System.Diagnostics;
@@ -7,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace cpu_net
 {
@@ -44,10 +47,37 @@ namespace cpu_net
                 return;
             }
 
+            // 初始化自动更新服务（必须在任何 UI 操作之前）
+            UpdateService.Initialize();
+
+            // 覆盖安装后检测并修复指向旧路径的开机启动项
+            try { new AutoStart().FixStaleAutoStartEntry(); } catch { /* 忽略 */ }
+
             RegisterEvents();
             base.OnStartup(e);
-            TaskbarIcon = (TaskbarIcon)FindResource("Taskbar");
-            // Toast notification removed for .NET 8 compatibility
+
+            // 单文件发布下，XAML 资源可能无法通过 FindResource 解析，全部改为代码创建
+            var notifyVm = new NotifyIconViewModel();
+
+            var sysTrayMenu = new System.Windows.Controls.ContextMenu();
+            sysTrayMenu.Items.Add(new MenuItem { Header = "显示窗口", Command = notifyVm.ShowWindowCommand });
+            sysTrayMenu.Items.Add(new MenuItem { Header = "关闭窗口", Command = notifyVm.HideWindowCommand });
+            sysTrayMenu.Items.Add(new Separator());
+            sysTrayMenu.Items.Add(new MenuItem { Header = "检查更新", Command = notifyVm.CheckUpdateCommand });
+            sysTrayMenu.Items.Add(new Separator());
+            sysTrayMenu.Items.Add(new MenuItem { Header = "退出", Command = notifyVm.ExitApplicationCommand });
+
+            TaskbarIcon = new TaskbarIcon
+            {
+                ToolTipText = "CPU_NET",
+                IconSource = new BitmapImage(new Uri("pack://application:,,,/assets/shinnku.ico")),
+                DataContext = notifyVm,
+                ContextMenu = sysTrayMenu,
+                DoubleClickCommand = notifyVm.ShowWindowCommand
+            };
+
+            // 后台静默检查更新（不阻塞启动）
+            _ = UpdateService.CheckForUpdatesSilentAsync();
         }
 
         /// <summary>

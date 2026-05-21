@@ -1,0 +1,18 @@
+﻿<Page x:Class="SetupBootstrapper.Pages.WelcomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="40">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="CPU_NET" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,30,0,5"/>
+        <TextBlock Grid.Row="1" Text="校园网自动登录工具" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,40"/>
+        <TextBlock Grid.Row="2" Text="欢迎使用 CPU_NET 安装向导。&#x0A;&#x0A;本向导将帮助您在计算机上安装 CPU_NET。点击「下一步」继续。" FontSize="13" HorizontalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+        <Button Grid.Row="3" Content="下一步" Width="100" Height="36" HorizontalAlignment="Right" Click="NextButton_Click"/>
+    </Grid>
+</Page>

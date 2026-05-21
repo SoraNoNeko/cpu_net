@@ -1,0 +1,180 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (如 4.0.4，不带 v 前缀)'
+        required: true
+        type: string
+      prerelease:
+        description: '是否为预发布版本'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk
+
+      - name: Resolve Version
+        id: version
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $ver = '${{ inputs.version }}'
+          } else {
+            $ver = '${{ github.ref_name }}'.TrimStart('v')
+          }
+          if ($ver -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "版本号格式错误: $ver"
+            exit 1
+          }
+          Write-Output "value=$ver" >> $env:GITHUB_OUTPUT
+          Write-Host "Resolved version: $ver"
+
+      - name: Verify csproj Version
+        shell: pwsh
+        run: |
+          [xml]$csproj = Get-Content cpu_net/cpu_net.csproj
+          $projVer = $csproj.Project.PropertyGroup.Version
+          $tagVer = '${{ steps.version.outputs.value }}'
+          if ($projVer -ne $tagVer) {
+            Write-Error "版本号不一致! csproj=$projVer, tag=$tagVer. 请先运行 .\bump-version.ps1 或手动修改 csproj。"
+            exit 1
+          }
+
+      - name: Publish Application
+        run: |
+          dotnet publish cpu_net/cpu_net.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o ./publish
+
+      - name: Clean Sensitive Files from Publish
+        shell: pwsh
+        run: |
+          $excludePatterns = @("config.yaml", "*.log", "*.tmp", "*.config", "appsettings*.json")
+          foreach ($pattern in $excludePatterns) {
+            Get-ChildItem ./publish -Filter $pattern -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+              Remove-Item $_.FullName -Force
+              Write-Host "Removed: $($_.Name)"
+            }
+          }
+
+      - name: Pack with Velopack
+        shell: pwsh
+        run: |
+          vpk pack `
+            --mainExe cpu_net.exe `
+            --outputDir ./releases `
+            --packTitle "CPU_NET" `
+            --packId cpu_net `
+            --packVersion '${{ steps.version.outputs.value }}' `
+            --packAuthors "真红@FrostNova-sora" `
+            --icon cpu_net/assets/shinnku.ico `
+            --splashImage cpu_net/assets/shinnku.jpg `
+            --delta None `
+            --packDir ./publish
+
+      - name: Build Uninstaller
+        shell: pwsh
+        run: |
+          dotnet publish "cpu_net/uninstaller/uninstaller.csproj" `
+            -c Release `
+            -r win-x64 `
+            -p:PublishSingleFile=true `
+            --self-contained false
+
+      - name: Build Custom Installer Wizard
+        shell: pwsh
+        run: |
+          $setupBootstrapperDir = "cpu_net/SetupBootstrapper"
+          $setupResourcePath = "$setupBootstrapperDir/Resources/setup.exe"
+          New-Item -ItemType Directory -Path "$setupBootstrapperDir/Resources" -Force | Out-Null
+
+          $velopackSetup = Get-ChildItem releases -Filter "*Setup.exe" | Select-Object -First 1
+          if ($velopackSetup) {
+            Copy-Item $velopackSetup.FullName $setupResourcePath -Force
+            Write-Host "Copied Velopack setup to Resources: $($velopackSetup.Name)"
+          } else {
+            Write-Warning "Velopack Setup.exe not found"
+          }
+
+          # 强制清理缓存，避免增量编译复用旧代码/旧资源
+          Write-Host "Cleaning SetupBootstrapper build cache..."
+          dotnet clean "$setupBootstrapperDir/SetupBootstrapper.csproj" -c Release | Out-Null
+          if (Test-Path "$setupBootstrapperDir/obj") { Remove-Item "$setupBootstrapperDir/obj" -Recurse -Force }
+          if (Test-Path "$setupBootstrapperDir/bin") { Remove-Item "$setupBootstrapperDir/bin" -Recurse -Force }
+
+          $bootstrapperOutput = "bootstrapper-temp"
+          New-Item -ItemType Directory -Path $bootstrapperOutput -Force | Out-Null
+
+          dotnet publish "$setupBootstrapperDir/SetupBootstrapper.csproj" `
+            -c Release `
+            -p:PublishSingleFile=true `
+            -o $bootstrapperOutput
+
+          $installerSource = "$bootstrapperOutput/CPU_NET_Setup.exe"
+          $version = '${{ steps.version.outputs.value }}'
+          $installerTarget = "releases/CPU_NET-$version-Installer.exe"
+          if (Test-Path $installerSource) {
+            if (Test-Path $installerTarget) { Remove-Item $installerTarget -Force }
+            Copy-Item $installerSource $installerTarget
+            Write-Host "Custom installer created: CPU_NET-$version-Installer.exe"
+          }
+
+          Remove-Item $bootstrapperOutput -Recurse -Force
+
+          # 删除 Velopack 原生 Setup.exe，Installer 为唯一安装入口
+          $nativeSetup = Get-ChildItem releases -Filter "*Setup.exe" | Where-Object { $_.Name -notlike "*Installer*" }
+          if ($nativeSetup) {
+            Remove-Item $nativeSetup.FullName -Force
+            Write-Host "Removed native Setup.exe"
+          }
+
+      - name: List Release Assets
+        shell: pwsh
+        run: |
+          Write-Host "=== Release Assets ==="
+          Get-ChildItem releases -File | ForEach-Object {
+            $size = [math]::Round($_.Length / 1MB, 2)
+            Write-Host "  $($_.Name) ($size MB)"
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: CPU_NET v${{ steps.version.outputs.value }}
+          tag_name: v${{ steps.version.outputs.value }}
+          draft: false
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+          generate_release_notes: true
+          files: releases/*

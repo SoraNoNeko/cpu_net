@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>CPU_NET_Setup</AssemblyName>
+    <ApplicationIcon>..\assets\shinnku.ico</ApplicationIcon>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <BaseOutputPath>..\..\workingspace\bin\SetupBootstrapper</BaseOutputPath>
+    <BaseIntermediateOutputPath>..\..\workingspace\obj\SetupBootstrapper</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\setup.exe" Condition="Exists('Resources\setup.exe')">
+      <LogicalName>setup.exe</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\uninstaller\bin\Release\net8.0-windows\win-x64\publish\uninstaller.exe" Condition="Exists('..\uninstaller\bin\Release\net8.0-windows\win-x64\publish\uninstaller.exe')">
+      <LogicalName>uninstaller.exe</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

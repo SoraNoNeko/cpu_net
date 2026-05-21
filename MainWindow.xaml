@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:cpu_net"
         xmlns:pages="clr-namespace:cpu_net.Views.Pages"
         xmlns:vm="clr-namespace:cpu_net.ViewModel"
-        Icon="shinnku.ico"
+        Icon="assets/shinnku.ico"
         mc:Ignorable="d"
         Closing="Window_Closing"
         StateChanged="Window_StateChanged"
