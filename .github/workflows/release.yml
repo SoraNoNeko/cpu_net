@@ -60,8 +60,9 @@ jobs:
       - name: Verify csproj Version
         shell: pwsh
         run: |
-          [xml]$csproj = Get-Content cpu_net/cpu_net.csproj
-          $projVer = $csproj.Project.PropertyGroup.Version
+          [xml]$csproj = Get-Content cpu_net.csproj
+          $versionNode = $csproj.SelectSingleNode('//Version')
+          $projVer = if ($versionNode) { $versionNode.InnerText.Trim() } else { "" }
           $tagVer = '${{ steps.version.outputs.value }}'
           if ($projVer -ne $tagVer) {
             Write-Error "版本号不一致! csproj=$projVer, tag=$tagVer. 请先运行 .\bump-version.ps1 或手动修改 csproj。"
@@ -70,7 +71,7 @@ jobs:
 
       - name: Publish Application
         run: |
-          dotnet publish cpu_net/cpu_net.csproj `
+          dotnet publish cpu_net.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
@@ -99,15 +100,15 @@ jobs:
             --packId cpu_net `
             --packVersion '${{ steps.version.outputs.value }}' `
             --packAuthors "真红@FrostNova-sora" `
-            --icon cpu_net/assets/shinnku.ico `
-            --splashImage cpu_net/assets/shinnku.jpg `
+            --icon assets/shinnku.ico `
+            --splashImage assets/shinnku.jpg `
             --delta None `
             --packDir ./publish
 
       - name: Build Uninstaller
         shell: pwsh
         run: |
-          dotnet publish "cpu_net/uninstaller/uninstaller.csproj" `
+          dotnet publish "uninstaller/uninstaller.csproj" `
             -c Release `
             -r win-x64 `
             -p:PublishSingleFile=true `
@@ -116,7 +117,7 @@ jobs:
       - name: Build Custom Installer Wizard
         shell: pwsh
         run: |
-          $setupBootstrapperDir = "cpu_net/SetupBootstrapper"
+          $setupBootstrapperDir = "SetupBootstrapper"
           $setupResourcePath = "$setupBootstrapperDir/Resources/setup.exe"
           New-Item -ItemType Directory -Path "$setupBootstrapperDir/Resources" -Force | Out-Null
 
@@ -158,6 +159,22 @@ jobs:
           if ($nativeSetup) {
             Remove-Item $nativeSetup.FullName -Force
             Write-Host "Removed native Setup.exe"
+          }
+
+      - name: Clean Release Assets
+        shell: pwsh
+        run: |
+          # 删除 Velopack 内部元数据文件（assets.win.json 不需要，但 releases.win.json 是 GithubSource 必需）
+          $assetsJson = Join-Path releases "assets.win.json"
+          if (Test-Path $assetsJson) {
+            Remove-Item $assetsJson -Force
+            Write-Host "Removed: assets.win.json"
+          }
+          # 删除便携版压缩包（Installer.exe 为唯一分发入口）
+          $portable = Get-ChildItem releases -Filter "*Portable.zip" | Select-Object -First 1
+          if ($portable) {
+            Remove-Item $portable.FullName -Force
+            Write-Host "Removed: $($portable.Name)"
           }
 
       - name: List Release Assets
