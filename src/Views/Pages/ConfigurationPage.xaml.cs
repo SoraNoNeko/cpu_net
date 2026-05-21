@@ -165,6 +165,7 @@ namespace cpu_net.Views.Pages
                 "electricity" => ElectricitySettings,
                 "email" => EmailSettings,
                 "background" => BackgroundSettings,
+                "proxy" => ProxyPanel,
                 "about" => AboutPanel,
                 _ => null
             };
@@ -209,7 +210,8 @@ namespace cpu_net.Views.Pages
                 (ElectricitySettings, 1),
                 (EmailSettings, 2),
                 (BackgroundSettings, 3),
-                (AboutPanel, 4)
+                (ProxyPanel, 4),
+                (AboutPanel, 5)
             };
 
             // 底部边界处理：当滚动到最底部时，强制选中最后一个标签
