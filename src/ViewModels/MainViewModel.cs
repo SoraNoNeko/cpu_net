@@ -22,6 +22,8 @@ namespace cpu_net.ViewModel
         private readonly SettingModel _settingData = new SettingModel();
         private Timer? _timer;
         private Timer? _electricityTimer;
+        private int _checkingNetwork;
+        private int _loggingIn;
         private readonly ElectricityService _electricityService = new ElectricityService();
         private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient
         {
@@ -98,6 +100,23 @@ namespace cpu_net.ViewModel
 
         private async void LoginCheck(object? state)
         {
+            if (Interlocked.Exchange(ref _checkingNetwork, 1) != 0) return;
+            try
+            {
+                await CheckNetworkAsync();
+            }
+            catch (Exception ex)
+            {
+                Info($"网络检测异常：{NetworkService.DescribeFailure(ex)}");
+            }
+            finally
+            {
+                Volatile.Write(ref _checkingNetwork, 0);
+            }
+        }
+
+        private async Task CheckNetworkAsync()
+        {
             var setting = new SettingModel();
             string testUrl = NetworkConstants.GoogleDnsIp;
             string testCode = string.Empty;
@@ -121,10 +140,13 @@ namespace cpu_net.ViewModel
             }
 
             bool networkAvailable = false;
+            var timer = Stopwatch.StartNew();
+            string endpoint = Uri.TryCreate(testUrl, UriKind.Absolute, out var testUri)
+                ? testUri.GetLeftPart(UriPartial.Path) : "测试地址格式无效";
 
             try
             {
-                var response = await _httpClient.GetAsync(testUrl);
+                using var response = await _httpClient.GetAsync(testUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -135,35 +157,31 @@ namespace cpu_net.ViewModel
                     }
                     else
                     {
-                        Record($"connecttest.txt 内容不匹配：'{content.Trim()}'");
+                        Info($"网络检测失败：{endpoint}；HTTP {(int)response.StatusCode}；正文与配置不匹配；实际长度 {content.Trim().Length}，预期长度 {testCode.Length}；耗时 {timer.ElapsedMilliseconds} ms");
                     }
                 }
                 else
                 {
-                    Record($"访问 {testUrl} 失败，HTTP状态码：{response.StatusCode}");
+                    Info($"网络检测失败：{endpoint}；HTTP {(int)response.StatusCode}；耗时 {timer.ElapsedMilliseconds} ms");
                 }
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                Record($"网络请求异常：{ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Record(ex.InnerException.Message);
-                }
+                Info($"网络检测失败：{endpoint}；{NetworkService.DescribeFailure(ex)}；耗时 {timer.ElapsedMilliseconds} ms；检测使用系统代理设置");
             }
             catch (System.Threading.Tasks.TaskCanceledException ex) when (ex.InnerException is TimeoutException)
             {
-                Record($"网络连接超时：{ex.Message}");
+                Info($"网络检测失败：{endpoint}；{NetworkService.DescribeFailure(ex)}；耗时 {timer.ElapsedMilliseconds} ms");
             }
             catch (Exception ex)
             {
-                Record($"检测过程中发生未知异常：{ex.Message}");
+                Info($"网络检测失败：{endpoint}；{NetworkService.DescribeFailure(ex)}；耗时 {timer.ElapsedMilliseconds} ms");
             }
 
             if (!networkAvailable)
             {
-                LoginOnline();
-                Record("检测到网络断开连接，已尝试重连");
+                Info("外网检测未通过，开始检查认证接口并尝试登录；检测失败可能来自 DNS、代理或测试站点。");
+                await Task.Run(() => LoginOnline());
             }
         }
 
@@ -303,6 +321,13 @@ namespace cpu_net.ViewModel
 
         public int LoginOnline()
         {
+            if (Interlocked.Exchange(ref _loggingIn, 1) != 0) return 0;
+            try { return LoginCore(); }
+            finally { Volatile.Write(ref _loggingIn, 0); }
+        }
+
+        private int LoginCore()
+        {
             if (!_settingData.PathExist())
             {
                 Info("No Config Found");
@@ -328,27 +353,24 @@ namespace cpu_net.ViewModel
             string localIp = TryGetLocalIpFromDrCom(mode, ip);
             string loginUrl = BuildLoginUrl(mode, setting, localIp);
 
-            Record(loginUrl);
 
             try
             {
-                string responseText = NetworkService.HttpGetRequest(loginUrl);
-                responseText = responseText.Replace(NetworkConstants.LoginCallback, "").Replace(" ", "");
-                Record(responseText);
+                string responseText = NetworkService.HttpGetRequest(loginUrl, Info);
 
                 // 去除首尾包裹（如 dr1004(...) ）
-                if (responseText.Length < 4)
+                if (string.IsNullOrWhiteSpace(responseText))
                 {
-                    Info("网络错误");
+                    Info("登录失败：认证接口返回空正文，请检查上方 HTTP 状态及耗时。");
                     return 0;
                 }
 
-                var json = responseText.Substring(1, responseText.Length - 3);
+                var json = NetworkService.ExtractJson(responseText, NetworkConstants.LoginCallback);
                 var loginResult = JsonSerializer.Deserialize<LoginResult>(json);
 
                 if (loginResult == null)
                 {
-                    Info("网络错误");
+                    Info("登录失败：认证接口返回 JSON null。");
                     return 0;
                 }
 
@@ -368,7 +390,7 @@ namespace cpu_net.ViewModel
 
                 var errorMsg = JsonSerializer.Deserialize<LoginErrorMessage>(json);
                 Info("登录失败");
-                Info($"Error Message: {errorMsg?.msg}");
+                Info($"认证结果：result={loginResult.result}；ret_code={errorCode?.ret_code}；msg={errorMsg?.msg}");
                 return 0;
             }
             catch (System.Net.Http.HttpRequestException e)
@@ -380,15 +402,12 @@ namespace cpu_net.ViewModel
             }
             catch (JsonException e)
             {
-                Record(e.Message);
-                Info("JSON解析失败");
+                Info($"登录响应解析失败：{e.Message}");
                 return 0;
             }
             catch (Exception e)
             {
-                Record(e.TargetSite + e.Message + e.StackTrace);
-                Info(e.TargetSite + e.Message + e.StackTrace);
-                Info("网络连接失败，请检查网络设置，如果使用路由器，请确认是否使用自动获取ip");
+                Info($"登录请求失败：{(e is InvalidOperationException ? e.Message : NetworkService.DescribeFailure(e))}");
                 return 0;
             }
         }
@@ -424,23 +443,27 @@ namespace cpu_net.ViewModel
 
             try
             {
-                string raw = NetworkService.HttpGetRequest(drComUrl)
-                    .Replace(NetworkConstants.DrComCallback, "")
-                    .Replace(" ", "");
+                string raw = NetworkService.HttpGetRequest(drComUrl, Info);
 
                 if (raw.Length < 3)
                 {
+                    Info($"状态接口返回空或过短正文，使用本地 IP {fallbackIp}。");
                     return fallbackIp;
                 }
 
-                var json = raw.Substring(1, raw.Length - 2);
+                var json = NetworkService.ExtractJson(raw, NetworkConstants.DrComCallback);
                 var result = JsonSerializer.Deserialize<DrComIpResult>(json);
-                return result?.ss5 ?? fallbackIp;
+                if (IPAddress.TryParse(result?.ss5, out var address) && address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    Info($"状态接口确认认证 IP：{address}");
+                    return address.ToString();
+                }
+                Info($"状态接口未返回有效 IPv4 ss5，使用本地 IP {fallbackIp}。");
+                return fallbackIp;
             }
             catch (Exception e)
             {
-                Record($"Mode Case {mode}");
-                Record(e.Message);
+                Info($"状态查询失败：{(e is InvalidOperationException || e is JsonException ? e.Message : NetworkService.DescribeFailure(e))}；使用本地 IP {fallbackIp} 继续认证。");
                 return fallbackIp;
             }
         }
@@ -452,10 +475,10 @@ namespace cpu_net.ViewModel
         {
             return mode switch
             {
-                1 => $"{NetworkConstants.CpuLoginBaseUrl}&user_account=%2C0%2C{setting.Username}&user_password={setting.Password}" +
+                1 => $"{NetworkConstants.CpuLoginBaseUrl}&user_account=%2C0%2C{Uri.EscapeDataString(setting.Username)}&user_password={Uri.EscapeDataString(setting.Password)}" +
                      $"&wlan_user_ip={localIp}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=3.3.3&v=1954",
-                _ => $"{NetworkConstants.BroadbandLoginBaseUrl}callback={NetworkConstants.LoginCallback}&login_method=1&user_account=%2C0%2C{setting.Username}%40{setting.Carrier}" +
-                     $"&user_password={setting.Password}&wlan_user_ip={localIp}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&terminal_type=1&lang=zh-cn&v=9745&lang=zh"
+                _ => $"{NetworkConstants.BroadbandLoginBaseUrl}callback={NetworkConstants.LoginCallback}&login_method=1&user_account=%2C0%2C{Uri.EscapeDataString(setting.Username)}%40{Uri.EscapeDataString(setting.Carrier)}" +
+                     $"&user_password={Uri.EscapeDataString(setting.Password)}&wlan_user_ip={localIp}&wlan_user_ipv6=&wlan_user_mac=000000000000&wlan_ac_ip=&wlan_ac_name=&jsVersion=4.2.2&terminal_type=1&lang=zh-cn&v=9745&lang=zh"
             };
         }
 

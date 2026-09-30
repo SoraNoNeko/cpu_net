@@ -14,9 +14,9 @@
     <BaseOutputPath>D:\py\cpu_net\workingspace\bin</BaseOutputPath>
     <BaseIntermediateOutputPath>D:\py\cpu_net\workingspace\obj</BaseIntermediateOutputPath>
     <IsPublishable>True</IsPublishable>
-    <Version>4.1.4</Version>
-    <AssemblyVersion>4.1.4</AssemblyVersion>
-    <FileVersion>4.1.4</FileVersion>
+    <Version>4.1.5</Version>
+    <AssemblyVersion>4.1.5</AssemblyVersion>
+    <FileVersion>4.1.5</FileVersion>
     <IncludeSymbols>False</IncludeSymbols>
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
@@ -29,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="obj\**" />
+    <Compile Remove="tests\**" />
     <Compile Remove="uninstaller\**" />
     <Compile Remove="SetupBootstrapper\**" />
     <EmbeddedResource Remove="obj\**" />

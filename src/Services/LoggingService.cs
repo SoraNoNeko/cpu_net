@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,10 +25,6 @@ namespace cpu_net.Services
         public static void WriteErrorLog(Exception ex)
         {
             string errorLogDir = Path.Combine(LogBaseDir, "ErrorLog");
-            if (!Directory.Exists(errorLogDir))
-            {
-                Directory.CreateDirectory(errorLogDir);
-            }
 
             var now = DateTime.Now;
             string fileName = $"{now.Year}{now.Month:D2}{now.Day:D2}.log";
@@ -41,10 +38,15 @@ namespace cpu_net.Services
                       + ex.StackTrace
                       + Environment.NewLine + "----------------------footer--------------------------" + Environment.NewLine;
 
+            LogSemaphore.Wait();
             try
             {
-                LogSemaphore.Wait();
+                Directory.CreateDirectory(errorLogDir);
                 File.AppendAllText(logPath, log);
+            }
+            catch (Exception failure)
+            {
+                WriteFallback(log, failure);
             }
             finally
             {
@@ -71,10 +73,6 @@ namespace cpu_net.Services
             }
 
             string logDir = Path.Combine(LogBaseDir, logName);
-            if (!Directory.Exists(logDir))
-            {
-                Directory.CreateDirectory(logDir);
-            }
 
             var now = DateTime.Now;
             string fileName = logName == "RecordLog"
@@ -84,10 +82,27 @@ namespace cpu_net.Services
             string logPath = Path.Combine(logDir, fileName);
             var formattedLog = $"{DateTime.Now:M-d HH:mm:ss}  {log}{Environment.NewLine}";
 
-            await LogSemaphore.WaitAsync();
+            await LogSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                await File.AppendAllTextAsync(logPath, formattedLog);
+                Directory.CreateDirectory(logDir);
+                for (int attempt = 0; ; attempt++)
+                {
+                    try
+                    {
+                        await File.AppendAllTextAsync(logPath, formattedLog).ConfigureAwait(false);
+                        break;
+                    }
+                    catch (IOException ex) when (attempt < 3 &&
+                        ((ex.HResult & 0xffff) == 32 || (ex.HResult & 0xffff) == 33))
+                    {
+                        await Task.Delay(100 * (attempt + 1)).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception failure)
+            {
+                WriteFallback(formattedLog, failure);
             }
             finally
             {
@@ -111,6 +126,7 @@ namespace cpu_net.Services
                 return string.Empty;
             }
 
+            LogSemaphore.Wait();
             try
             {
                 var allLines = File.ReadAllLines(logPath);
@@ -122,6 +138,27 @@ namespace cpu_net.Services
             catch
             {
                 return string.Empty;
+            }
+            finally
+            {
+                LogSemaphore.Release();
+            }
+        }
+
+        // 独立的按进程备用文件，日志失败时不递归调用日志服务。
+        private static void WriteFallback(string entry, Exception failure)
+        {
+            try
+            {
+                string directory = Path.Combine(Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData), "cpu_net", "FallbackLogs");
+                Directory.CreateDirectory(directory);
+                File.AppendAllText(Path.Combine(directory, $"{DateTime.Now:yyyyMMdd}-{Environment.ProcessId}.log"),
+                    $"{DateTime.Now:O} 日志写入失败：{failure.GetType().Name} (0x{failure.HResult:X8}){Environment.NewLine}{entry}");
+            }
+            catch
+            {
+                Debug.WriteLine("CPU_NET 日志及备用日志写入失败。");
             }
         }
     }
