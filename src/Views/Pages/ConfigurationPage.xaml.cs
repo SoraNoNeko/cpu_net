@@ -14,7 +14,6 @@ namespace cpu_net.Views.Pages
 {
     public partial class ConfigurationPage : Page
     {
-        private SettingModel _settingData = new SettingModel();
         private bool _isScrollingFromMenu = false;
 
         public MainWindow ParentWindow { get; set; }
@@ -35,12 +34,6 @@ namespace cpu_net.Views.Pages
             e.Handled = Regex.IsMatch(e.Text, "[^0-9.-]+");
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            var settingData = new SettingModel();
-            LoadSettingsToUi(settingData, isReset: true);
-        }
-
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
             Process.Start("explorer.exe", "https://github.com/SoraNoNeko/cpu_net");
@@ -53,6 +46,7 @@ namespace cpu_net.Views.Pages
 
         private void UpdateProxySettingsEnabled()
         {
+            if (ProxySettingsBorder == null) return;
             bool enabled = ProxyEnabledCheckBox.IsChecked == true;
             ProxySettingsBorder.IsEnabled = enabled;
             ProxySettingsBorder.Opacity = enabled ? 1.0 : 0.5;
@@ -63,84 +57,98 @@ namespace cpu_net.Views.Pages
             _ = UpdateService.CheckAndPromptUpdateAsync(Window.GetWindow(this));
         }
 
-        private void ToHome()
+        private void SaveModule(string name, Func<SettingModel, bool> update, Action? apply = null)
         {
-            if (!this.Dispatcher.CheckAccess())
+            try
             {
-                this.Dispatcher.Invoke(DispatcherPriority.Send, new Action(ToHome));
+                if (!new SettingsStore().Update(update)) return;
             }
-            else
+            catch (Exception ex)
             {
-                this.ParentWindow.Home_Button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                MessageBox.Show($"{name}保存失败：{ex.Message}", "保存设置", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            try
+            {
+                apply?.Invoke();
+                MessageBox.Show($"{name}已保存", "保存设置");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{name}已保存，应用设置失败：{ex.Message}。请重启软件后重试。", "保存设置");
             }
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private void SaveNetwork_Click(object sender, RoutedEventArgs e)
         {
-            // 保存网络设置
-            if (NetworkEnabledCheckBox.IsChecked == true)
+            SaveModule("网络设置", settings =>
             {
-                if (string.IsNullOrEmpty(code.Text) || string.IsNullOrEmpty(secret.Password))
+                bool enabled = NetworkEnabledCheckBox.IsChecked == true;
+                if (enabled && (string.IsNullOrWhiteSpace(code.Text) || string.IsNullOrEmpty(secret.Password)))
                 {
-                    ScrollToSection(NetworkPanel);
-                    MenuListBox.SelectedIndex = 0;
-                    MessageBox.Show("请输入学号和密码", "Attention");
-                    return;
+                    MessageBox.Show("请输入学号和密码", "网络设置");
+                    return false;
                 }
-
-                if (carrier.SelectedIndex == 0 && cpu.IsChecked != true)
+                if (enabled && carrier.SelectedIndex <= 0 && cpu.IsChecked != true)
                 {
-                    ScrollToSection(NetworkPanel);
-                    MenuListBox.SelectedIndex = 0;
-                    MessageBox.Show("请选择运营商", "Attention");
-                    return;
+                    MessageBox.Show("请选择运营商", "网络设置");
+                    return false;
                 }
-            }
-
-            (string carrierValue, int key) = ResolveCarrier();
-
-            _settingData.NetworkLoginEnabled = NetworkEnabledCheckBox.IsChecked ?? true;
-            _settingData.IsAutoRun = AutoRun.IsChecked ?? false;
-            _settingData.IsAutoLogin = AutoLogin.IsChecked ?? false;
-            _settingData.IsAutoMin = AutoMin.IsChecked ?? false;
-            _settingData.IsSetLogin = SetLogin.IsChecked ?? false;
-            _settingData.Mode = ResolveMode();
-            _settingData.Username = code.Text;
-            _settingData.Password = secret.Password;
-            _settingData.Carrier = carrierValue;
-            _settingData.Key = key;
-            _settingData.LoginTime = int.Parse(loginTime.Text);
-
-            // 保存电费设置
-            if (!ElectricitySettings.SaveSettings(_settingData))
-                return;
-
-            // 保存邮件设置
-            EmailSettings.SaveSettings(_settingData);
-
-            // 保存背景设置
-            BackgroundSettings.SaveSettings(_settingData);
-
-            // 保存代理设置
-            _settingData.UpdateProxyEnabled = ProxyEnabledCheckBox.IsChecked ?? false;
-            _settingData.UpdateProxyType = ProxyTypeComboBox.SelectedItem is ComboBoxItem item ? item.Tag?.ToString() ?? "HTTP" : "HTTP";
-            _settingData.UpdateProxyHost = ProxyHostTextBox.Text?.Trim() ?? string.Empty;
-            _settingData.UpdateProxyPort = int.TryParse(ProxyPortTextBox.Text, out int proxyPort) ? proxyPort : 0;
-            _settingData.UpdateProxyUsername = ProxyUsernameTextBox.Text?.Trim() ?? string.Empty;
-            _settingData.UpdateProxyPassword = ProxyPasswordBox.Password ?? string.Empty;
-
-            _settingData.Save();
-
-            // 应用背景和图标
-            ParentWindow.ApplyBackgroundAndIcon();
-
-            // 重启定时器以应用新的间隔设置
-            if (ParentWindow.DataContext is MainViewModel vm)
+                if (!int.TryParse(loginTime.Text, out int interval) || interval < 1 || interval > 86400)
+                {
+                    MessageBox.Show("定时时长请输入 1 到 86400 之间的整数秒", "网络设置");
+                    return false;
+                }
+                var selectedCarrier = ResolveCarrier();
+                settings.NetworkLoginEnabled = enabled;
+                settings.IsAutoRun = AutoRun.IsChecked == true;
+                settings.IsAutoLogin = AutoLogin.IsChecked == true;
+                settings.IsAutoMin = AutoMin.IsChecked == true;
+                settings.IsSetLogin = SetLogin.IsChecked == true;
+                settings.Mode = ResolveMode();
+                settings.Username = code.Text.Trim();
+                settings.Password = secret.Password;
+                settings.Carrier = selectedCarrier.Carrier;
+                settings.Key = selectedCarrier.Key;
+                settings.LoginTime = interval;
+                return true;
+            }, () =>
             {
-                vm.TimerMain();
-            }
+                new AutoStart().SetMeAutoStart(AutoRun.IsChecked == true);
+                (ParentWindow?.DataContext as MainViewModel)?.RestartNetworkTimer();
+            });
+        }
 
-            MessageBox.Show("保存成功", "Info");
+        private void SaveElectricity_Click(object sender, RoutedEventArgs e) =>
+            SaveModule("电费设置", settings => ElectricitySettings.SaveSettings(settings),
+                () => (ParentWindow?.DataContext as MainViewModel)?.RestartElectricityTimer());
+
+        private void SaveEmail_Click(object sender, RoutedEventArgs e) =>
+            SaveModule("邮件设置", settings => EmailSettings.SaveSettings(settings));
+
+        private void SaveBackground_Click(object sender, RoutedEventArgs e) =>
+            SaveModule("背景与图标", settings => { BackgroundSettings.SaveSettings(settings); return true; },
+                () => ParentWindow?.ApplyBackgroundAndIcon());
+
+        private void SaveProxy_Click(object sender, RoutedEventArgs e)
+        {
+            SaveModule("代理设置", settings =>
+            {
+                bool enabled = ProxyEnabledCheckBox.IsChecked == true;
+                bool validPort = int.TryParse(ProxyPortTextBox.Text, out int port) && port >= 1 && port <= 65535;
+                if (enabled && (string.IsNullOrWhiteSpace(ProxyHostTextBox.Text) || !validPort))
+                {
+                    MessageBox.Show("请输入代理服务器及 1 到 65535 之间的端口", "代理设置");
+                    return false;
+                }
+                settings.UpdateProxyEnabled = enabled;
+                settings.UpdateProxyType = ProxyTypeComboBox.SelectedItem is ComboBoxItem item ? item.Tag?.ToString() ?? "HTTP" : "HTTP";
+                settings.UpdateProxyHost = ProxyHostTextBox.Text.Trim();
+                settings.UpdateProxyPort = validPort ? port : 0;
+                settings.UpdateProxyUsername = ProxyUsernameTextBox.Text.Trim();
+                settings.UpdateProxyPassword = ProxyPasswordBox.Password;
+                return true;
+            });
         }
 
         private void MenuListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

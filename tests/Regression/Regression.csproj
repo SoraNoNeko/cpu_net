@@ -9,5 +9,10 @@
     <Compile Include="../../src/Services/LoggingService.cs" Link="LoggingService.cs" />
     <Compile Include="../../src/Services/NetworkService.cs" Link="NetworkService.cs" />
     <Compile Include="../../src/Models/LoginResponseModels.cs" Link="LoginResponseModels.cs" />
+    <Compile Include="../../src/Services/TunDetectionService.cs" Link="TunDetectionService.cs" />
+    <Compile Include="../../src/Services/SettingsStore.cs" Link="SettingsStore.cs" />
+    <Compile Include="../../src/Models/SettingModel.cs" Link="SettingModel.cs" />
+    <PackageReference Include="Prism.Core" Version="9.0.537" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 </Project>

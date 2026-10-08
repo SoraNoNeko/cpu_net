@@ -27,8 +27,15 @@ namespace cpu_net.Views.Controls
             NotBoundBodyTextBox.Text = setting.EmailNotBoundBody;
         }
 
-        public void SaveSettings(SettingModel setting)
+        public bool SaveSettings(SettingModel setting)
         {
+            if (EnabledCheckBox.IsChecked == true &&
+                (string.IsNullOrWhiteSpace(SmtpServerTextBox.Text) || string.IsNullOrWhiteSpace(ToTextBox.Text) ||
+                 !int.TryParse(SmtpPortTextBox.Text, out int port) || port < 1 || port > 65535))
+            {
+                MessageBox.Show("请输入 SMTP 服务器、收件人及有效端口（1–65535）", "邮件设置");
+                return false;
+            }
             setting.EmailEnabled = EnabledCheckBox.IsChecked ?? false;
             setting.EmailSmtpServer = SmtpServerTextBox.Text.Trim();
             setting.EmailSmtpPort = int.TryParse(SmtpPortTextBox.Text, out var p) ? p : 587;
@@ -39,6 +46,7 @@ namespace cpu_net.Views.Controls
             setting.EmailAlertBody = AlertBodyTextBox.Text.Trim();
             setting.EmailNotBoundSubject = NotBoundSubjectTextBox.Text.Trim();
             setting.EmailNotBoundBody = NotBoundBodyTextBox.Text.Trim();
+            return true;
         }
 
         private async void TestButton_Click(object sender, RoutedEventArgs e)

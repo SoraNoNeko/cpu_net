@@ -1,8 +1,7 @@
-﻿using Prism.Mvvm;
+using Prism.Mvvm;
 using System;
 using System.IO;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using cpu_net.Services;
 
 namespace cpu_net.Model
 {
@@ -13,9 +12,9 @@ namespace cpu_net.Model
 
         private readonly string _settingDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.yaml");
 
-        private string _password;
-        private string _userName;
-        private string _carrier;
+        private string _password = string.Empty;
+        private string _userName = string.Empty;
+        private string _carrier = string.Empty;
         private int _key;
         private int _mode;
         private bool? _isAutoRun;
@@ -336,131 +335,8 @@ namespace cpu_net.Model
 
         #endregion
 
-        public SettingModel Read()
-        {
-            if (!File.Exists(_settingDataPath))
-            {
-                return new SettingModel();
-            }
+        public SettingModel Read() => new SettingsStore(_settingDataPath).Read();
 
-            string yamlStr = File.ReadAllText(_settingDataPath);
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(PascalCaseNamingConvention.Instance)
-                .Build();
-
-            try
-            {
-                return deserializer.Deserialize<SettingModel>(yamlStr);
-            }
-            catch (YamlDotNet.Core.YamlException)
-            {
-                return new SettingModel();
-            }
-        }
-
-        public void Save()
-        {
-            var userSettingData = new SettingModel
-            {
-                Username = Username,
-                Carrier = Carrier,
-                Key = Key,
-                Mode = Mode,
-                Password = Password,
-                IsAutoRun = IsAutoRun,
-                IsAutoLogin = IsAutoLogin,
-                IsAutoMin = IsAutoMin,
-                IsSetLogin = IsSetLogin,
-                NetworkLoginEnabled = NetworkLoginEnabled,
-                LoginTime = LoginTime,
-                TestMode = TestMode,
-                TestCode = TestCode,
-                TestUrl = TestUrl,
-                ElectricityEnabled = ElectricityEnabled,
-                ElectricityStudentNo = ElectricityStudentNo,
-                ElectricityThreshold = ElectricityThreshold,
-                ElectricityThresholdMode = ElectricityThresholdMode,
-                ElectricityIntervalMinutes = ElectricityIntervalMinutes,
-                ElectricityCheckHour = ElectricityCheckHour,
-                ElectricityCheckMinute = ElectricityCheckMinute,
-                EmailEnabled = EmailEnabled,
-                EmailSmtpServer = EmailSmtpServer,
-                EmailSmtpPort = EmailSmtpPort,
-                EmailUsername = EmailUsername,
-                EmailPassword = EmailPassword,
-                EmailTo = EmailTo,
-                EmailAlertSubject = EmailAlertSubject,
-                EmailAlertBody = EmailAlertBody,
-                EmailNotBoundSubject = EmailNotBoundSubject,
-                EmailNotBoundBody = EmailNotBoundBody,
-                NotifyType = NotifyType,
-                BackgroundImagePath = BackgroundImagePath,
-                BackgroundOpacity = BackgroundOpacity,
-                CustomIconPath = CustomIconPath,
-                TextBoxOpacity = TextBoxOpacity,
-                UpdateProxyEnabled = UpdateProxyEnabled,
-                UpdateProxyType = UpdateProxyType,
-                UpdateProxyHost = UpdateProxyHost,
-                UpdateProxyPort = UpdateProxyPort,
-                UpdateProxyUsername = UpdateProxyUsername,
-                UpdateProxyPassword = UpdateProxyPassword,
-            };
-
-            // 若配置已存在，保留原有配置中未在本次内存中修改的字段
-            if (userSettingData.PathExist())
-            {
-                SettingModel data = userSettingData.Read();
-
-                // 保留网络设置旧字段
-                userSettingData.Username = string.IsNullOrWhiteSpace(userSettingData.Username) ? data.Username : userSettingData.Username;
-                userSettingData.Password = string.IsNullOrWhiteSpace(userSettingData.Password) ? data.Password : userSettingData.Password;
-                userSettingData.Carrier = string.IsNullOrWhiteSpace(userSettingData.Carrier) ? data.Carrier : userSettingData.Carrier;
-                userSettingData.Key = userSettingData.Key == 0 ? data.Key : userSettingData.Key;
-                userSettingData.Mode = userSettingData.Mode == 0 ? data.Mode : userSettingData.Mode;
-                userSettingData.LoginTime = userSettingData.LoginTime == 0 ? data.LoginTime : userSettingData.LoginTime;
-
-                // 保留测试模式字段
-                userSettingData.TestMode = data.TestMode;
-                userSettingData.TestUrl = data.TestUrl;
-                userSettingData.TestCode = data.TestCode;
-
-                // 保留新增字段（如果内存中未设置，使用旧值）
-                userSettingData.ElectricityEnabled = userSettingData.ElectricityEnabled || data.ElectricityEnabled;
-                userSettingData.ElectricityStudentNo = string.IsNullOrWhiteSpace(userSettingData.ElectricityStudentNo) ? data.ElectricityStudentNo : userSettingData.ElectricityStudentNo;
-                userSettingData.ElectricityThreshold = userSettingData.ElectricityThreshold == 0 ? data.ElectricityThreshold : userSettingData.ElectricityThreshold;
-                userSettingData.ElectricityThresholdMode = userSettingData.ElectricityThresholdMode == 0 ? data.ElectricityThresholdMode : userSettingData.ElectricityThresholdMode;
-                userSettingData.ElectricityIntervalMinutes = userSettingData.ElectricityIntervalMinutes == 0 ? data.ElectricityIntervalMinutes : userSettingData.ElectricityIntervalMinutes;
-                userSettingData.ElectricityCheckHour = userSettingData.ElectricityCheckHour == 0 ? data.ElectricityCheckHour : userSettingData.ElectricityCheckHour;
-                userSettingData.ElectricityCheckMinute = userSettingData.ElectricityCheckMinute == 0 ? data.ElectricityCheckMinute : userSettingData.ElectricityCheckMinute;
-                userSettingData.NotifyType = userSettingData.NotifyType == 0 ? data.NotifyType : userSettingData.NotifyType;
-                userSettingData.EmailEnabled = userSettingData.EmailEnabled || data.EmailEnabled;
-                userSettingData.EmailSmtpServer = string.IsNullOrWhiteSpace(userSettingData.EmailSmtpServer) ? data.EmailSmtpServer : userSettingData.EmailSmtpServer;
-                userSettingData.EmailSmtpPort = userSettingData.EmailSmtpPort == 0 ? data.EmailSmtpPort : userSettingData.EmailSmtpPort;
-                userSettingData.EmailUsername = string.IsNullOrWhiteSpace(userSettingData.EmailUsername) ? data.EmailUsername : userSettingData.EmailUsername;
-                userSettingData.EmailPassword = string.IsNullOrWhiteSpace(userSettingData.EmailPassword) ? data.EmailPassword : userSettingData.EmailPassword;
-                userSettingData.EmailTo = string.IsNullOrWhiteSpace(userSettingData.EmailTo) ? data.EmailTo : userSettingData.EmailTo;
-                userSettingData.EmailAlertSubject = string.IsNullOrWhiteSpace(userSettingData.EmailAlertSubject) ? data.EmailAlertSubject : userSettingData.EmailAlertSubject;
-                userSettingData.EmailAlertBody = string.IsNullOrWhiteSpace(userSettingData.EmailAlertBody) ? data.EmailAlertBody : userSettingData.EmailAlertBody;
-                userSettingData.EmailNotBoundSubject = string.IsNullOrWhiteSpace(userSettingData.EmailNotBoundSubject) ? data.EmailNotBoundSubject : userSettingData.EmailNotBoundSubject;
-                userSettingData.EmailNotBoundBody = string.IsNullOrWhiteSpace(userSettingData.EmailNotBoundBody) ? data.EmailNotBoundBody : userSettingData.EmailNotBoundBody;
-                userSettingData.BackgroundImagePath = string.IsNullOrWhiteSpace(userSettingData.BackgroundImagePath) ? data.BackgroundImagePath : userSettingData.BackgroundImagePath;
-                userSettingData.BackgroundOpacity = userSettingData.BackgroundOpacity == 0 ? data.BackgroundOpacity : userSettingData.BackgroundOpacity;
-                userSettingData.CustomIconPath = string.IsNullOrWhiteSpace(userSettingData.CustomIconPath) ? data.CustomIconPath : userSettingData.CustomIconPath;
-                userSettingData.TextBoxOpacity = userSettingData.TextBoxOpacity == 0 ? data.TextBoxOpacity : userSettingData.TextBoxOpacity;
-                userSettingData.UpdateProxyEnabled = userSettingData.UpdateProxyEnabled || data.UpdateProxyEnabled;
-                userSettingData.UpdateProxyType = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyType) ? data.UpdateProxyType : userSettingData.UpdateProxyType;
-                userSettingData.UpdateProxyHost = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyHost) ? data.UpdateProxyHost : userSettingData.UpdateProxyHost;
-                userSettingData.UpdateProxyPort = userSettingData.UpdateProxyPort == 0 ? data.UpdateProxyPort : userSettingData.UpdateProxyPort;
-                userSettingData.UpdateProxyUsername = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyUsername) ? data.UpdateProxyUsername : userSettingData.UpdateProxyUsername;
-                userSettingData.UpdateProxyPassword = string.IsNullOrWhiteSpace(userSettingData.UpdateProxyPassword) ? data.UpdateProxyPassword : userSettingData.UpdateProxyPassword;
-            }
-
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(PascalCaseNamingConvention.Instance)
-                .Build();
-
-            string yamlStr = serializer.Serialize(userSettingData);
-            File.WriteAllText(_settingDataPath, yamlStr);
-        }
+        public void Save() => new SettingsStore(_settingDataPath).Save(this);
     }
 }

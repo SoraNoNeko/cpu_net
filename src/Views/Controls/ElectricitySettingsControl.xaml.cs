@@ -51,7 +51,7 @@ namespace cpu_net.Views.Controls
             int minute = CheckMinuteComboBox.SelectedIndex >= 0 ? CheckMinuteComboBox.SelectedIndex * 5 : 0;
 
             // 维护时段校验（23:00-08:00）
-            if (hour >= 23 || hour < 8)
+            if (EnabledCheckBox.IsChecked == true && (hour >= 23 || hour < 8))
             {
                 MessageBox.Show("定时查询时间不能设置在服务器维护时段（23:00-08:00）", "Attention");
                 return false;

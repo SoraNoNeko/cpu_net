@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using cpu_net.Constants;
 using cpu_net.Model;
 using cpu_net.Services;
@@ -24,6 +24,7 @@ namespace cpu_net.ViewModel
         private Timer? _electricityTimer;
         private int _checkingNetwork;
         private int _loggingIn;
+        private readonly TunLoginGuard _tunGuard = new TunLoginGuard();
         private readonly ElectricityService _electricityService = new ElectricityService();
         private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient
         {
@@ -64,39 +65,33 @@ namespace cpu_net.ViewModel
 
         public void TimerMain()
         {
-            var setting = new SettingModel();
-            int intervalMs = 1000;
-            int elecDueMs = Timeout.Infinite;
-            if (setting.PathExist())
-            {
-                setting = setting.Read();
-                if (setting.NetworkLoginEnabled)
-                {
-                    intervalMs = setting.LoginTime * 1000;
-                }
-                else
-                {
-                    intervalMs = Timeout.Infinite;
-                }
-                if (setting.ElectricityEnabled)
-                {
-                    var now = DateTime.Now;
-                    var target = new DateTime(now.Year, now.Month, now.Day, setting.ElectricityCheckHour, setting.ElectricityCheckMinute, 0);
-                    if (target <= now)
-                        target = target.AddDays(1);
-                    elecDueMs = (int)(target - now).TotalMilliseconds;
-                }
-            }
+            RestartNetworkTimer();
+            RestartElectricityTimer();
+        }
 
+        public void RestartNetworkTimer()
+        {
+            var setting = _settingData.Read();
+            int intervalMs = setting.NetworkLoginEnabled
+                ? Math.Clamp(setting.LoginTime, 1, 86400) * 1000 : Timeout.Infinite;
             _timer?.Dispose();
             _timer = new Timer(LoginCheck, null, intervalMs, intervalMs);
-
-            _electricityTimer?.Dispose();
-            if (elecDueMs != Timeout.Infinite)
-            {
-                _electricityTimer = new Timer(ElectricityCheck, null, elecDueMs, Timeout.Infinite);
-            }
         }
+
+        public void RestartElectricityTimer()
+        {
+            var setting = _settingData.Read();
+            _electricityTimer?.Dispose();
+            _electricityTimer = null;
+            if (!setting.ElectricityEnabled) return;
+            var now = DateTime.Now;
+            var target = new DateTime(now.Year, now.Month, now.Day,
+                Math.Clamp(setting.ElectricityCheckHour, 0, 23), Math.Clamp(setting.ElectricityCheckMinute, 0, 59), 0);
+            if (target <= now) target = target.AddDays(1);
+            _electricityTimer = new Timer(ElectricityCheck, null, (int)(target - now).TotalMilliseconds, Timeout.Infinite);
+        }
+
+        private bool PauseLoginForTun() => _tunGuard.ShouldPause(TunDetectionService.Detect(), Info);
 
         private async void LoginCheck(object? state)
         {
@@ -139,6 +134,8 @@ namespace cpu_net.ViewModel
                 return;
             }
 
+            if (PauseLoginForTun()) return;
+
             bool networkAvailable = false;
             var timer = Stopwatch.StartNew();
             string endpoint = Uri.TryCreate(testUrl, UriKind.Absolute, out var testUri)
@@ -177,6 +174,8 @@ namespace cpu_net.ViewModel
             {
                 Info($"网络检测失败：{endpoint}；{NetworkService.DescribeFailure(ex)}；耗时 {timer.ElapsedMilliseconds} ms");
             }
+
+            if (PauseLoginForTun()) return;
 
             if (!networkAvailable)
             {
@@ -322,7 +321,7 @@ namespace cpu_net.ViewModel
         public int LoginOnline()
         {
             if (Interlocked.Exchange(ref _loggingIn, 1) != 0) return 0;
-            try { return LoginCore(); }
+            try { return PauseLoginForTun() ? 0 : LoginCore(); }
             finally { Volatile.Write(ref _loggingIn, 0); }
         }
 
@@ -350,12 +349,14 @@ namespace cpu_net.ViewModel
                 Info($"自动识别为{envText}");
             }
 
+            if (PauseLoginForTun()) return 0;
             string localIp = TryGetLocalIpFromDrCom(mode, ip);
             string loginUrl = BuildLoginUrl(mode, setting, localIp);
 
 
             try
             {
+                if (PauseLoginForTun()) return 0;
                 string responseText = NetworkService.HttpGetRequest(loginUrl, Info);
 
                 // 去除首尾包裹（如 dr1004(...) ）
